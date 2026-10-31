@@ -14,10 +14,15 @@ interface ScrapedModel {
 }
 
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
-const MAX_PAGES = 100;
+const CONCURRENCY = 6;
+const SORTS = ["popular", "newest", "name"];
+const FILTERS = ["", "local", "cloud", "tools", "vision", "embedding", "thinking"];
+const SEARCH_TERMS = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
 let cache: { data: ScrapedModel[]; timestamp: number } | null = null;
 
 const KNOWN_CAPABILITIES = ["tools", "vision", "embedding", "thinking", "cloud", "text"];
+
+const SIZE_RE = /^(\d+(\.\d+)?[mb]|e\d+b|\d+x\d+(\.\d+)?b)$/i;
 
 function parseModelsFromHtml(html: string): ScrapedModel[] {
   const $ = cheerio.load(html);
@@ -34,24 +39,18 @@ function parseModelsFromHtml(html: string): ScrapedModel[] {
 
     const capabilities: string[] = [];
     const sizes: string[] = [];
-    let pulls = "";
-    let updated = "";
 
-    $el.find("span[x-test-size]").each((_, span) => {
-      const text = $(span).text().trim().toLowerCase();
-      if (text) sizes.push(text);
+    // ollama.com no longer ships x-test-* attributes, so classify leaf badge spans by their text.
+    $el.find("span").each((_, span) => {
+      const $s = $(span);
+      if ($s.children().length > 0 || $s.closest('[title="Context window"]').length) return;
+      const text = $s.text().trim().toLowerCase();
+      if (KNOWN_CAPABILITIES.includes(text)) capabilities.push(text);
+      else if (SIZE_RE.test(text)) sizes.push(text);
     });
 
-    $el.find("span[x-test-capability]").each((_, span) => {
-      const text = $(span).text().trim().toLowerCase();
-      if (text && KNOWN_CAPABILITIES.includes(text)) capabilities.push(text);
-    });
-
-    const pullSpan = $el.find("span[x-test-pull-count]").first().text().trim();
-    if (pullSpan) pulls = pullSpan;
-
-    const updatedSpan = $el.find("span[x-test-updated]").first().text().trim();
-    if (updatedSpan) updated = updatedSpan;
+    const pulls = $el.find('span[title$="downloads"] > span').first().text().trim();
+    const updated = $el.find('span[title^="Updated"]').first().text().trim();
 
     models.push({ id, name: heading || id, description, capabilities, sizes, pulls, updated });
   });
@@ -86,21 +85,28 @@ async function scrapeAllModels(): Promise<ScrapedModel[]> {
 
   const modelMap = new Map<string, ScrapedModel>();
 
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    const url = page === 1
-      ? "https://ollama.com/search"
-      : `https://ollama.com/search?page=${page}`;
-    try {
-      const html = await fetchPage(url);
-      const models = parseModelsFromHtml(html);
-      if (models.length === 0) break;
+  // ollama.com/search returns at most 20 results and ignores ?page=N, so build the catalog from the
+  // union of several sort/capability views plus single-character name searches.
+  const queries = [
+    ...SORTS.flatMap((o) => FILTERS.map((c) => `o=${o}&c=${c}`)),
+    ...SEARCH_TERMS.map((q) => `o=popular&q=${q}`),
+  ];
+
+  for (let i = 0; i < queries.length; i += CONCURRENCY) {
+    const batch = queries.slice(i, i + CONCURRENCY);
+    const pages = await Promise.all(
+      batch.map((qs) =>
+        fetchPage(`https://ollama.com/search?${qs}`)
+          .then(parseModelsFromHtml)
+          .catch(() => [] as ScrapedModel[])
+      )
+    );
+    for (const models of pages) {
       for (const model of models) {
         if (!modelMap.has(model.id)) {
           modelMap.set(model.id, model);
         }
       }
-    } catch {
-      break;
     }
   }
 
