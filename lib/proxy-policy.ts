@@ -28,7 +28,9 @@ const GENERATION_ENDPOINTS = new Set([
 export const PROXY_QUICK_TIMEOUT_MS = 15_000;
 
 function normalize(path: string) {
-  return path.replace(/\/+$/, "") || "/";
+  let end = path.length;
+  while (end > 1 && path[end - 1] === "/") end--;
+  return path.slice(0, end) || "/";
 }
 
 export function isClientEndpoint(path: string) {
