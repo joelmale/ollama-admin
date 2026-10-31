@@ -9,7 +9,7 @@ mkdirSync("e2e/.tmp", { recursive: true });
 rmSync(dbFile, { force: true });
 rmSync(`${dbFile}-journal`, { force: true });
 
-process.env.DATABASE_URL = `file:${process.cwd().replace(/\\/g, "/")}/${dbFile}`;
+process.env.DATABASE_URL = `file:${process.cwd().replaceAll("\\", "/")}/${dbFile}`;
 execFileSync(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], {
   stdio: "inherit",
   env: process.env,

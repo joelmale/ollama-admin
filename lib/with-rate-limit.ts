@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 // API-key clients get their own bucket, so one app cannot exhaust another's

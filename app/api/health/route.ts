@@ -29,10 +29,14 @@ export async function GET() {
   }
 
   const purge = getLogPurgeStatus();
-  const logPurgeStatus = purge.lastError ? "error" : purge.lastRunAt ? "ok" : "pending";
+  let logPurgeStatus: "ok" | "error" | "pending" = "pending";
+  if (purge.lastError) logPurgeStatus = "error";
+  else if (purge.lastRunAt) logPurgeStatus = "ok";
 
   // A failed purge is reported but does not fail the container healthcheck.
-  const status = databaseStatus === "error" ? "error" : logPurgeStatus === "error" ? "degraded" : "ok";
+  let status: "ok" | "degraded" | "error" = "ok";
+  if (databaseStatus === "error") status = "error";
+  else if (logPurgeStatus === "error") status = "degraded";
 
   const health: HealthStatus = {
     status,

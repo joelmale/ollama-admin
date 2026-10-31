@@ -67,12 +67,14 @@ export default function SettingsPage() {
     }
   };
 
+  const retentionDays = Number.parseInt(logRetentionDays, 10);
+  const canPurge = Number.isInteger(retentionDays) && retentionDays >= 1;
+
   const purgeOldLogs = async () => {
     setPurging(true);
     try {
-      const days = parseInt(logRetentionDays, 10);
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
+      cutoff.setDate(cutoff.getDate() - retentionDays);
       const res = await fetch(`/api/logs?purge=true&before=${cutoff.toISOString()}`, {
         method: "DELETE",
       });
@@ -275,7 +277,7 @@ export default function SettingsPage() {
           variant="destructive"
           onClick={() => setConfirmPurge(true)}
           loading={purging}
-          disabled={!(parseInt(logRetentionDays, 10) >= 1)}
+          disabled={!canPurge}
         >
           <Trash2 className="mr-1 h-4 w-4" />
           {t("purgeLogs")}

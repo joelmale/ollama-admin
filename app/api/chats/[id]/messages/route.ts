@@ -9,6 +9,7 @@ import {
   readOllamaError,
 } from "@/lib/ollama";
 import { logAsync } from "@/lib/log-async";
+import { streamStatusCode } from "@/lib/stream-status";
 
 function buildOllamaRequest(
   chat: {
@@ -49,8 +50,6 @@ function buildOllamaRequest(
     },
   };
 }
-
-const CLIENT_CLOSED_REQUEST = 499;
 
 function createSSEStream(
   ollamaRes: Response,
@@ -117,7 +116,7 @@ function createSSEStream(
       }
 
       const latencyMs = Date.now() - startTime;
-      const statusCode = streamError ? 502 : clientGone ? CLIENT_CLOSED_REQUEST : 200;
+      const statusCode = streamStatusCode(streamError !== null, clientGone);
 
       try {
         if (fullContent) {

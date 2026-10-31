@@ -22,10 +22,10 @@ export default defineConfig({
       // Ratchet: autoUpdate raises these floors whenever coverage improves.
       thresholds: {
         autoUpdate: true,
-        lines: 87.15,
-        statements: 87.15,
-        functions: 86.9,
-        branches: 86.65,
+        lines: 87.3,
+        statements: 87.3,
+        functions: 87.57,
+        branches: 86.91,
       },
     },
   },

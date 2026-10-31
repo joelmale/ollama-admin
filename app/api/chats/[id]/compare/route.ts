@@ -9,6 +9,7 @@ import {
   readOllamaError,
 } from "@/lib/ollama";
 import { logAsync } from "@/lib/log-async";
+import { streamStatusCode } from "@/lib/stream-status";
 
 interface ModelTarget {
   serverId: string;
@@ -21,8 +22,6 @@ interface SideRequest {
   res: Response | null;
   error: string | null;
 }
-
-const CLIENT_CLOSED_REQUEST = 499;
 
 export async function POST(
   req: NextRequest,
@@ -225,7 +224,7 @@ export async function POST(
     }
 
     const latencyMs = Date.now() - startTime;
-    const statusCode = streamError ? 502 : clientGone ? CLIENT_CLOSED_REQUEST : 200;
+    const statusCode = streamStatusCode(streamError !== null, clientGone);
 
     try {
       if (fullContent) {
