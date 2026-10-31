@@ -81,6 +81,45 @@ describe("scrapeCatalog", () => {
 
     expect(models).toHaveLength(3);
   });
+
+  it("fetches every query but never more than six at once", async () => {
+    let active = 0;
+    let peak = 0;
+    const urls: string[] = [];
+    await scrapeCatalog(async (url) => {
+      urls.push(url);
+      active++;
+      peak = Math.max(peak, active);
+      await new Promise((r) => setTimeout(r, 1));
+      active--;
+      return fixture;
+    });
+
+    expect(peak).toBe(6);
+    expect(new Set(urls).size).toBe(urls.length);
+    expect(urls).toHaveLength(3 * 7 + 36);
+  });
+
+  it("keeps the first copy of a model seen across pages", async () => {
+    const renamed = fixture.replace("<span>llama3.1</span>", "<span>Llama Renamed</span>");
+    expect(renamed).not.toBe(fixture);
+    let n = 0;
+    const models = await scrapeCatalog(async () => (n++ === 0 ? fixture : renamed));
+
+    expect(models.find((m) => m.id === "llama3.1")?.name).toBe("llama3.1");
+  });
+
+  it.each(["8b", "270m", "1.5b", "e4b", "8x7b", "8x22b"])("reads %s as a size", async (size) => {
+    const [model] = parseModelsFromHtml(`<a href="/library/m"><h2>m</h2><span>${size}</span></a>`);
+
+    expect(model.sizes).toEqual([size]);
+  });
+
+  it.each(["120.7m downloads", "8k", "b", "latest"])("does not read %s as a size", async (text) => {
+    const [model] = parseModelsFromHtml(`<a href="/library/m"><h2>m</h2><span>${text}</span></a>`);
+
+    expect(model.sizes).toEqual([]);
+  });
 });
 
 describe("getCatalog", () => {
