@@ -46,10 +46,16 @@ case "${DATABASE_URL:-}" in
     sed -i 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
     node "$PRISMA_BIN" generate
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [INFO] Synchronizing PostgreSQL schema..."
-    node "$PRISMA_BIN" db push --skip-generate
+    # The checked-in migrations are SQLite SQL, so PostgreSQL uses db push, which
+    # refuses changes that would drop data. Take a pg_dump before upgrading.
+    if ! node "$PRISMA_BIN" db push --skip-generate; then
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [ERROR] PostgreSQL schema sync failed. If Prisma reported possible data loss, back up the database, then review the change before running 'prisma db push --accept-data-loss' manually." >&2
+      exit 1
+    fi
     ;;
   *)
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [INFO] Using SQLite database"
+    ./backup-sqlite.sh
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [INFO] Running database migrations..."
     if migration_output=$(node "$PRISMA_BIN" migrate deploy 2>&1); then
       printf '%s\n' "$migration_output"

@@ -53,11 +53,24 @@ export async function applyRateLimitSettings(): Promise<void> {
   if (config) setRateLimitConfig(config);
 }
 
-async function runPurge() {
+const purgeStatus: { lastRunAt: string | null; lastError: string | null } = {
+  lastRunAt: null,
+  lastError: null,
+};
+
+export function getLogPurgeStatus() {
+  return { ...purgeStatus };
+}
+
+export async function runPurge() {
   try {
     await purgeExpiredLogs();
+    purgeStatus.lastError = null;
   } catch (error) {
+    purgeStatus.lastError = String(error);
     logger.error("Log purge failed", { error: String(error) });
+  } finally {
+    purgeStatus.lastRunAt = new Date().toISOString();
   }
 }
 

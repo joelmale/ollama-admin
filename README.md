@@ -275,7 +275,7 @@ This is the core of what makes Ollama Admin different. The GPU Agent is a lightw
 |---|---|
 | **VRAM usage** | Used / total memory per GPU — know exactly how much room you have for another model |
 | **Models in memory** | Which models are currently loaded and consuming VRAM |
-| **Temperature** | Real-time GPU temperature with configurable threshold alerts |
+| **Temperature** | Real-time GPU temperature |
 | **Utilization** | GPU compute utilization percentage |
 | **Power draw** | Current power consumption per GPU |
 | **Tokens/s** | Throughput calculated from request logs — per model, per server |
@@ -313,10 +313,6 @@ GPU_BACKEND=nvidia python main.py   # or: amd, intel, apple, auto
 </details>
 
 Runs on port `11435` by default. Connect it in Ollama Admin → **Admin → Servers** → edit a server → set **GPU Agent URL** to `http://<gpu-server-ip>:11435`.
-
-### Alerts
-
-Set threshold-based alerts for GPU temperature, VRAM usage, error rates, and latency. Get warned before your GPU runs out of memory or overheats — from **Admin → Alerts**.
 
 ### Endpoints
 
@@ -439,6 +435,26 @@ Copy `.env.example` to `.env` and adjust as needed.
 
 ---
 
+## 💾 Backups, upgrades and health
+
+**Backups (SQLite).** All state lives in the `ollama-admin-data` volume. Before an upgrade that has pending database migrations, the container copies the database to `/data/backups/` and keeps the newest five (`DB_BACKUP_KEEP` changes this). For your own backups, stop the container and copy the volume:
+
+```bash
+docker compose stop ollama-admin
+docker run --rm -v ollama-admin_ollama-admin-data:/data -v "$PWD":/backup alpine cp /data/ollama-admin.db /backup/
+docker compose start ollama-admin
+```
+
+To restore, stop the container, copy a backup over `/data/ollama-admin.db`, and start it again.
+
+**PostgreSQL.** The checked-in migrations are SQLite-only, so PostgreSQL schemas are synced with `prisma db push`, which refuses changes that would drop data. Take a `pg_dump` before upgrading.
+
+**Upgrading.** Compose pins the image to a release (`VERSION` overrides it). Set `VERSION` or pull a newer `docker-compose.yml`, then `docker compose up -d`. Migrations run at start-up.
+
+**Health.** The image has a Docker `HEALTHCHECK` against `/api/health`, so `docker ps` shows `healthy` / `unhealthy`. The endpoint returns `503` when the database is unreachable and `"status": "degraded"` when the background log purge last failed, with the error in `logPurge.lastError`.
+
+---
+
 ## 🏗 Architecture
 
 ```
@@ -490,7 +506,6 @@ All Ollama traffic goes through the `/api/proxy` gateway — never directly from
 | `/admin/logs` | Request logs with filters, pagination, and export |
 | `/admin/metrics` | Usage graphs and performance analytics |
 | `/admin/gpu` | GPU status, VRAM, and temperature |
-| `/admin/alerts` | Alert rules and triggered warnings |
 | `/settings` | Theme, density, language, API keys, rate limits, database info |
 
 ---
@@ -577,9 +592,6 @@ Generate API keys from **Settings → API Keys**.
 | `GET` | `/api/logs` | Request logs — filterable by server, model, date, status |
 | `DELETE` | `/api/logs` | Purge logs before a given date |
 | `GET` | `/api/logs/export` | Export logs (`?format=csv\|json`) |
-| `GET` | `/api/alerts` | List alert rules |
-| `POST` | `/api/alerts` | Create alert rule |
-| `GET` | `/api/alerts/check` | Evaluate all active alerts |
 
 </details>
 
