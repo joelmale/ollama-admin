@@ -187,7 +187,10 @@
       "embedding": "Memory",
       "thinking": "The Brain",
       "code": "Secret Scrolls"
-    }
+    },
+    "catalogErrorTitle": "The charts be lost",
+    "catalogError": "Couldn't fetch the charts from ollama.com. Check this ship can reach the open sea, then try again.",
+    "retry": "Try again"
   },
   "admin": {
     "models": {

@@ -189,7 +189,10 @@
       "embedding": "Embedding",
       "thinking": "Raisonnement",
       "code": "Code"
-    }
+    },
+    "catalogErrorTitle": "Catalogue indisponible",
+    "catalogError": "Impossible de charger le catalogue de modèles depuis ollama.com. Vérifiez que ce serveur accède à Internet, puis réessayez.",
+    "retry": "Réessayer"
   },
   "admin": {
     "models": {

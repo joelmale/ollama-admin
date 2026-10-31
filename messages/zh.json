@@ -187,7 +187,10 @@
       "embedding": "嵌入",
       "thinking": "思维",
       "code": "代码"
-    }
+    },
+    "catalogErrorTitle": "目录不可用",
+    "catalogError": "无法从 ollama.com 加载模型目录。请检查此服务器能否访问互联网，然后重试。",
+    "retry": "重试"
   },
   "admin": {
     "models": {

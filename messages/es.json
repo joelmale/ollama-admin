@@ -187,7 +187,10 @@
       "embedding": "Embedding",
       "thinking": "Razonamiento",
       "code": "Código"
-    }
+    },
+    "catalogErrorTitle": "Catálogo no disponible",
+    "catalogError": "No se pudo cargar el catálogo de modelos de ollama.com. Comprueba que este servidor tiene acceso a internet y vuelve a intentarlo.",
+    "retry": "Reintentar"
   },
   "admin": {
     "models": {

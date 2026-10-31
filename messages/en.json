@@ -187,7 +187,10 @@
       "embedding": "Embedding",
       "thinking": "Thinking",
       "code": "Code"
-    }
+    },
+    "catalogErrorTitle": "Catalog unavailable",
+    "catalogError": "Could not load the model catalog from ollama.com. Check that this server can reach the internet, then retry.",
+    "retry": "Retry"
   },
   "admin": {
     "models": {

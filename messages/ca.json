@@ -189,7 +189,10 @@
       "embedding": "Embedding",
       "thinking": "Raonament",
       "code": "Codi"
-    }
+    },
+    "catalogErrorTitle": "Catàleg no disponible",
+    "catalogError": "No s'ha pogut carregar el catàleg de models d'ollama.com. Comprova que aquest servidor té accés a internet i torna-ho a provar.",
+    "retry": "Torna-ho a provar"
   },
   "admin": {
     "models": {

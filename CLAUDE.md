@@ -41,7 +41,7 @@ All Ollama API requests go through `/api/proxy/[...path]` — never call Ollama 
 - `proxy.ts` (Next.js 16 file convention, replaces `middleware.ts`) enforces auth on all routes except public paths (`/api/auth`, `/api/setup`, `/api/health`, `/setup`, `/auth`)
 - Setup-not-completed redirects to `/setup` wizard
 - `AUTH_DISABLED=true` bypasses login for local dev
-- Admin-only guards on: `/admin/users`, `/api/users`, `/discover`, `/api/catalog`
+- Admin-only guards on: `/admin/*`, `/api/admin/*`, `/api/users`, `/api/api-keys`, `/settings` (middleware), plus `requireAdmin()` in routes. `/api/proxy` limits non-admins and API keys to inference and read endpoints (`lib/proxy-policy.ts`)
 - User model has roles: `admin` | `user`; first admin is created during setup wizard
 - JWT strategy with bcrypt password hashing
 
@@ -49,7 +49,7 @@ All Ollama API requests go through `/api/proxy/[...path]` — never call Ollama 
 Server configuration lives in the database (not just `.env`). Users can add/remove/test servers from the UI. Each chat and log entry is tied to a specific server.
 
 ### Model Catalog
-The `/discover` page scrapes ollama.com for the model catalog. Results are cached in memory for 30 minutes and concurrent requests share one scrape; a failed or empty scrape returns 502 and is not cached. Admin-only access. (The `CatalogModel` table is unused.)
+The `/discover` page scrapes ollama.com for the model catalog. Results are cached in memory for 30 minutes and concurrent requests share one scrape; a failed or empty scrape returns 502 and is not cached (a stale cache is served if one exists). Browsing is open to all users; pulling is admin-only. (The `CatalogModel` table is unused.)
 
 ### Database
 - SQLite by default (`file:./ollama-admin.db`), PostgreSQL via `DATABASE_URL`

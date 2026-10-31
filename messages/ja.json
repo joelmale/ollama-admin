@@ -187,7 +187,10 @@
       "embedding": "埋め込み",
       "thinking": "思考",
       "code": "コード"
-    }
+    },
+    "catalogErrorTitle": "カタログを利用できません",
+    "catalogError": "ollama.com からモデルカタログを読み込めませんでした。このサーバーがインターネットに接続できるか確認して、再試行してください。",
+    "retry": "再試行"
   },
   "admin": {
     "models": {
