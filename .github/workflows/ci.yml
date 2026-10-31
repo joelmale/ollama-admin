@@ -27,8 +27,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Lifecycle scripts stay off; prisma generate is the only one the app needs.
+      - run: npm ci --ignore-scripts
+      - run: npm run db:generate
+      - run: npm run test:e2e:browsers
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v7
         if: failure()

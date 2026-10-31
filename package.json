@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:browsers": "playwright install --with-deps chromium",
     "db:provider": "node scripts/prisma-provider.js",
     "db:generate": "npm run db:provider && prisma generate",
     "db:push": "npm run db:provider && prisma db push",
