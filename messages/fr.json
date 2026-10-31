@@ -182,6 +182,35 @@
     "emptyAction": "Actualiser le catalogue",
     "downloading": "Téléchargement...",
     "fitsGpu": "Compatible GPU",
+    "sortBy": "Trier par",
+    "sort": {
+      "popular": "Les plus populaires",
+      "updated": "Les plus récents",
+      "name": "Nom",
+      "size": "Taille",
+      "grade": "Note de vitesse"
+    },
+    "columns": {
+      "model": "Modèle",
+      "pulls": "Téléchargements",
+      "updated": "Mis à jour",
+      "size": "Taille",
+      "vram": "VRAM",
+      "speed": "Vitesse",
+      "grade": "Note"
+    },
+    "vramLabel": "VRAM de votre GPU (Go)",
+    "vramHint": "Saisissez la VRAM de votre GPU pour voir quels modèles conviennent.",
+    "vramDetected": "Détectée : {gpu}",
+    "vramUseDetected": "Utiliser la valeur détectée",
+    "vramEstimate": "~{gb} Go de VRAM, {pct} % de votre GPU",
+    "vramFit": {
+      "comfortable": "Tient confortablement",
+      "tight": "Juste",
+      "exceeds": "Ne tient pas"
+    },
+    "vramLegend": "Vert : jusqu'à 75 % de la VRAM. Jaune : jusqu'à 100 %. Rouge : plus que votre VRAM.",
+    "reverseSort": "Inverser l'ordre de tri",
     "capabilities": {
       "text": "Texte",
       "tools": "Outils",

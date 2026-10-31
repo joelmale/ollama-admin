@@ -180,6 +180,35 @@
     "emptyAction": "Refresh catalog",
     "downloading": "Downloading...",
     "fitsGpu": "Fits in GPU",
+    "sortBy": "Sort by",
+    "sort": {
+      "popular": "Most popular",
+      "updated": "Most recent",
+      "name": "Name",
+      "size": "Size",
+      "grade": "Speed grade"
+    },
+    "columns": {
+      "model": "Model",
+      "pulls": "Pulls",
+      "updated": "Updated",
+      "size": "Size",
+      "vram": "VRAM",
+      "speed": "Speed",
+      "grade": "Grade"
+    },
+    "vramLabel": "Your GPU VRAM (GB)",
+    "vramHint": "Enter your GPU's VRAM to see which models fit.",
+    "vramDetected": "Detected: {gpu}",
+    "vramUseDetected": "Use detected",
+    "vramEstimate": "~{gb} GB of VRAM, {pct}% of your GPU",
+    "vramFit": {
+      "comfortable": "Fits comfortably",
+      "tight": "Tight fit",
+      "exceeds": "Does not fit"
+    },
+    "vramLegend": "Green: up to 75% of VRAM. Yellow: up to 100%. Red: more than your VRAM.",
+    "reverseSort": "Reverse sort order",
     "capabilities": {
       "text": "Text",
       "tools": "Tools",
