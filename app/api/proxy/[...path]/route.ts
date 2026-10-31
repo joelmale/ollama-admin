@@ -4,9 +4,13 @@ import { logger } from "@/lib/logger";
 import { logAsync } from "@/lib/log-async";
 import { withRateLimit } from "@/lib/with-rate-limit";
 import { validateApiKey } from "@/lib/validate-api-key";
+import { requireAdmin } from "@/lib/require-admin";
+import { AUTH_DISABLED } from "@/lib/constants";
+import { isClientEndpoint, proxyTimeoutMs } from "@/lib/proxy-policy";
 import {
   buildOllamaUrl,
   formatOllamaConnectionError,
+  isTimeoutError,
   redactOllamaUrl,
 } from "@/lib/ollama";
 
@@ -27,6 +31,19 @@ async function proxyToOllama(req: NextRequest) {
 
   const path = req.nextUrl.pathname.replace("/api/proxy", "");
   const serverId = req.nextUrl.searchParams.get("serverId");
+
+  if (!isClientEndpoint(path)) {
+    const isAdmin = !hasApiKey && (AUTH_DISABLED || (await requireAdmin()) !== null);
+    if (!isAdmin) {
+      logger.warn("Proxy endpoint restricted", { path, apiKey: !!hasApiKey });
+      return new Response(
+        JSON.stringify({
+          error: `${path} changes installed models and is restricted to admins. Use Admin → Models instead.`,
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
 
   logger.debug("Proxy request", { method: req.method, path, serverId });
 
@@ -85,10 +102,13 @@ async function proxyToOllama(req: NextRequest) {
   logger.info("Proxy forwarding", { method: req.method, ollamaUrl: displayOllamaUrl, model, server: server.name, bodyBytes: bodySize });
 
   try {
+    const timeoutMs = proxyTimeoutMs(path);
+    const signals = [req.signal, ...(timeoutMs ? [AbortSignal.timeout(timeoutMs)] : [])].filter(Boolean);
     const ollamaRes = await fetch(ollamaUrl, {
       method: req.method,
       headers: { "Content-Type": "application/json" },
       ...(body ? { body } : {}),
+      signal: AbortSignal.any(signals as AbortSignal[]),
     });
 
     const latencyMs = Date.now() - startTime;
@@ -120,6 +140,7 @@ async function proxyToOllama(req: NextRequest) {
   } catch (err) {
     const latencyMs = Date.now() - startTime;
     const message = formatOllamaConnectionError(server.url, err);
+    const status = isTimeoutError(err) ? 504 : 502;
 
     logger.error("Proxy connection failed", { ollamaUrl: displayOllamaUrl, error: message, latencyMs, model });
 
@@ -128,12 +149,12 @@ async function proxyToOllama(req: NextRequest) {
       model,
       endpoint,
       latencyMs,
-      statusCode: 502,
+      statusCode: status,
       apiKeyId: apiKeyId ?? null,
     });
 
     return new Response(JSON.stringify({ error: message }), {
-      status: 502,
+      status,
       headers: { "Content-Type": "application/json" },
     });
   }

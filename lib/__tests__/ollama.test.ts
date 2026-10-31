@@ -237,3 +237,23 @@ describe("buildOllamaUrl", () => {
     ).toThrow("must not include embedded credentials");
   });
 });
+
+describe("request timeouts", () => {
+  it("gives ollamaFetch a default timeout signal", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));
+
+    await ollamaFetch("http://localhost:11434", "/api/version");
+
+    const init = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("explains a timeout instead of a generic connection failure", () => {
+    const message = formatOllamaConnectionError(
+      "http://gpu-box:11434",
+      new DOMException("The operation was aborted due to timeout", "TimeoutError")
+    );
+
+    expect(message).toContain("did not respond in time");
+  });
+});
