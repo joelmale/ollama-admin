@@ -140,7 +140,8 @@
       "deleteError": "プリセットの削除エラー",
       "deletePreset": "プリセット{name}を削除",
       "namePlaceholder": "プリセット名..."
-    }
+    },
+    "streamError": "応答に失敗しました: {error}"
   },
   "compare": {
     "title": "モデル比較",
@@ -186,7 +187,10 @@
       "embedding": "埋め込み",
       "thinking": "思考",
       "code": "コード"
-    }
+    },
+    "catalogErrorTitle": "カタログを利用できません",
+    "catalogError": "ollama.com からモデルカタログを読み込めませんでした。このサーバーがインターネットに接続できるか確認して、再試行してください。",
+    "retry": "再試行"
   },
   "admin": {
     "models": {
@@ -232,10 +236,13 @@
       "active": "アクティブ",
       "online": "オンライン",
       "offline": "オフライン",
-      "deleteConfirm": "このサーバーを削除しますか？",
+      "deleteConfirm": "このサーバーのチャットとリクエストログも削除されます。残す場合は、代わりにサーバーを無効にしてください。",
       "emptyTitle": "サーバーが設定されていません",
       "emptyDescription": "最初のOllamaサーバーを追加して始めましょう。",
-      "emptyAction": "サーバーを追加"
+      "emptyAction": "サーバーを追加",
+      "deleteTitle": "サーバーを削除",
+      "deleteSuccess": "サーバーを削除しました",
+      "deleteError": "サーバーを削除できませんでした。サーバーログを確認してください。"
     },
     "logs": {
       "title": "ログ",
@@ -493,9 +500,6 @@
     "language": "言語",
     "loggingPrivacy": "ログとプライバシー",
     "logRetentionDays": "ログ保持期間（日）",
-    "storePrompts": "プロンプト内容を保存",
-    "storePromptsYes": "はい — プロンプトと応答を完全に保存",
-    "storePromptsNo": "いいえ — メタデータのみ保存（トークン、レイテンシ）",
     "saveChanges": "変更を保存",
     "saved": "設定が保存されました",
     "purgeLogs": "古いログを削除",
@@ -531,7 +535,8 @@
     "apiKeyDeleteError": "APIキーの削除エラー",
     "database": "データベース",
     "connected": "接続済み",
-    "databaseType": "SQLite（デフォルト）"
+    "databaseType": "SQLite（デフォルト）",
+    "logRetentionHint": "これより古いリクエストログは6時間ごとに自動で削除されます。0にすると無期限に保持します。"
   },
   "notFound": {
     "title": "ページが見つかりません",

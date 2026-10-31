@@ -140,7 +140,8 @@
       "deleteError": "删除预设出错",
       "deletePreset": "删除预设 {name}",
       "namePlaceholder": "预设名称..."
-    }
+    },
+    "streamError": "回复失败：{error}"
   },
   "compare": {
     "title": "模型对比",
@@ -186,7 +187,10 @@
       "embedding": "嵌入",
       "thinking": "思维",
       "code": "代码"
-    }
+    },
+    "catalogErrorTitle": "目录不可用",
+    "catalogError": "无法从 ollama.com 加载模型目录。请检查此服务器能否访问互联网，然后重试。",
+    "retry": "重试"
   },
   "admin": {
     "models": {
@@ -232,10 +236,13 @@
       "active": "活跃",
       "online": "在线",
       "offline": "离线",
-      "deleteConfirm": "确定要删除此服务器吗？",
+      "deleteConfirm": "这也会删除该服务器的聊天和请求日志。如需保留，请改为停用该服务器。",
       "emptyTitle": "未配置服务器",
       "emptyDescription": "添加您的第一个 Ollama 服务器以开始使用。",
-      "emptyAction": "添加服务器"
+      "emptyAction": "添加服务器",
+      "deleteTitle": "删除服务器",
+      "deleteSuccess": "服务器已删除",
+      "deleteError": "无法删除服务器。请检查服务器日志。"
     },
     "logs": {
       "title": "日志",
@@ -493,9 +500,6 @@
     "language": "语言",
     "loggingPrivacy": "日志与隐私",
     "logRetentionDays": "日志保留时间（天）",
-    "storePrompts": "存储提示词内容",
-    "storePromptsYes": "是 — 存储完整提示词和回复",
-    "storePromptsNo": "否 — 仅存储元数据（Token、延迟）",
     "saveChanges": "保存更改",
     "saved": "设置已保存",
     "purgeLogs": "清除旧日志",
@@ -531,7 +535,8 @@
     "apiKeyDeleteError": "删除 API 密钥出错",
     "database": "数据库",
     "connected": "已连接",
-    "databaseType": "SQLite（默认）"
+    "databaseType": "SQLite（默认）",
+    "logRetentionHint": "早于此期限的请求日志每 6 小时自动删除。设为 0 则永久保留。"
   },
   "notFound": {
     "title": "页面未找到",

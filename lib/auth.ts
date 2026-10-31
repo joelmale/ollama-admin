@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
+import { getUserAccess } from "@/lib/user-access";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -32,7 +33,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
   pages: {
     signIn: "/auth/signin",
   },
@@ -41,6 +42,13 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role || "user";
+        return token;
+      }
+      if (token.id) {
+        const access = await getUserAccess(token.id);
+        // NextAuth clears the session cookie when this callback throws.
+        if (!access) throw new Error("User is inactive or no longer exists");
+        token.role = access.role;
       }
       return token;
     },

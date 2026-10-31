@@ -13,11 +13,17 @@ vi.mock("next-auth/jwt", () => ({
   getToken: vi.fn(),
 }));
 
+vi.mock("@/lib/user-access", () => ({
+  getUserAccess: vi.fn(),
+}));
+
 import { prisma } from "@/lib/prisma";
 import { getToken } from "next-auth/jwt";
+import { getUserAccess } from "@/lib/user-access";
 
 const findSetupSetting = prisma.settings.findUnique as ReturnType<typeof vi.fn>;
 const getAuthToken = getToken as ReturnType<typeof vi.fn>;
+const getAccess = getUserAccess as ReturnType<typeof vi.fn>;
 
 async function loadProxy() {
   const { proxy } = await import("@/proxy");
@@ -27,7 +33,8 @@ async function loadProxy() {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.resetModules();
-  getAuthToken.mockResolvedValue({ role: "admin" });
+  getAuthToken.mockResolvedValue({ id: "u1", role: "admin" });
+  getAccess.mockResolvedValue({ role: "admin" });
 });
 
 describe("proxy setup guard", () => {
@@ -198,5 +205,41 @@ describe("proxy setup guard", () => {
 
     expect(response.status).toBe(200);
     expect(findSetupSetting).not.toHaveBeenCalled();
+  });
+});
+
+describe("proxy session revalidation", () => {
+  beforeEach(() => {
+    findSetupSetting.mockResolvedValue({ value: "true" });
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  it("rejects a valid token for a deactivated or deleted user", async () => {
+    getAccess.mockResolvedValue(null);
+    const proxy = await loadProxy();
+
+    const res = await proxy(new NextRequest("http://localhost/api/chats"));
+
+    expect(res.status).toBe(401);
+    expect(getAccess).toHaveBeenCalledWith("u1");
+  });
+
+  it("uses the current database role, not the role in the token", async () => {
+    getAccess.mockResolvedValue({ role: "user" });
+    const proxy = await loadProxy();
+
+    const res = await proxy(new NextRequest("http://localhost/api/users"));
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("http://localhost/");
+  });
+
+  it("rejects a token without a user id", async () => {
+    getAuthToken.mockResolvedValue({ role: "admin" });
+    const proxy = await loadProxy();
+
+    const res = await proxy(new NextRequest("http://localhost/api/chats"));
+
+    expect(res.status).toBe(401);
   });
 });

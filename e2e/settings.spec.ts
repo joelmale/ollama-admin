@@ -17,9 +17,10 @@ test.describe("Settings Page", () => {
     await expect(page.locator('select[aria-label]').first()).toBeVisible();
   });
 
-  test("displays API keys section", async ({ page }) => {
+  test("explains automatic log retention", async ({ page }) => {
     await page.goto("/settings");
-    await expect(page.getByText(/API Keys|Claves API/)).toBeVisible();
+    await expect(page.getByText(/Logging & Privacy/)).toBeVisible();
+    await expect(page.getByText(/deleted automatically every 6 hours/)).toBeVisible();
   });
 
   test("displays rate limit section", async ({ page }) => {

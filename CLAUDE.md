@@ -11,7 +11,6 @@ Ollama Admin is a web-based administration panel for managing one or more [Ollam
 - **Discover**: Browse and pull models from the Ollama catalog (admin-only, live scraping from ollama.com)
 - **Metrics & Logs**: Request logging with token counts and latency, usage dashboards, CSV export
 - **GPU Monitoring**: Optional sidecar agent (Python) for real-time GPU stats via `nvidia-smi`
-- **Alerts**: Configurable threshold alerts for latency and error rates
 - **User Management**: Admin/user roles, user CRUD (admin-only)
 - **API Keys**: Generate and manage API keys for programmatic access
 - **Settings**: System-wide settings (theme, language, density)
@@ -42,7 +41,7 @@ All Ollama API requests go through `/api/proxy/[...path]` — never call Ollama 
 - `proxy.ts` (Next.js 16 file convention, replaces `middleware.ts`) enforces auth on all routes except public paths (`/api/auth`, `/api/setup`, `/api/health`, `/setup`, `/auth`)
 - Setup-not-completed redirects to `/setup` wizard
 - `AUTH_DISABLED=true` bypasses login for local dev
-- Admin-only guards on: `/admin/users`, `/api/users`, `/discover`, `/api/catalog`
+- Admin-only guards on: `/admin/*`, `/api/admin/*`, `/api/users`, `/api/api-keys`, `/settings` (middleware), plus `requireAdmin()` in routes. `/api/proxy` limits non-admins and API keys to inference and read endpoints (`lib/proxy-policy.ts`)
 - User model has roles: `admin` | `user`; first admin is created during setup wizard
 - JWT strategy with bcrypt password hashing
 
@@ -50,7 +49,7 @@ All Ollama API requests go through `/api/proxy/[...path]` — never call Ollama 
 Server configuration lives in the database (not just `.env`). Users can add/remove/test servers from the UI. Each chat and log entry is tied to a specific server.
 
 ### Model Catalog
-The `/discover` page scrapes ollama.com for the model catalog. Results are cached in the `CatalogModel` table. Rate-limited to avoid hammering the source. Admin-only access.
+The `/discover` page scrapes ollama.com for the model catalog. Results are cached in memory for 30 minutes and concurrent requests share one scrape; a failed or empty scrape returns 502 and is not cached (a stale cache is served if one exists). Browsing is open to all users; pulling is admin-only. (The `CatalogModel` table is unused.)
 
 ### Database
 - SQLite by default (`file:./ollama-admin.db`), PostgreSQL via `DATABASE_URL`
@@ -62,7 +61,7 @@ The `/discover` page scrapes ollama.com for the model catalog. Results are cache
 ```
 ollama-admin/
 ├── app/
-│   ├── (admin)/admin/     # Admin pages: models, servers, users, logs, metrics, gpu, alerts
+│   ├── (admin)/admin/     # Admin pages: models, servers, users, logs, metrics, gpu, api-keys
 │   ├── (chat)/chat/       # Chat interface (list + [id] detail)
 │   ├── (discover)/discover/ # Model catalog / discovery
 │   ├── (setup)/setup/     # Onboarding wizard
@@ -112,7 +111,6 @@ ollama-admin/
 | `/api/catalog`                | Model catalog (scraped)          |
 | `/api/users`                  | User management (admin-only)     |
 | `/api/presets`                | Chat parameter presets           |
-| `/api/alerts`                 | Alert configuration              |
 | `/api/api-keys`               | API key management               |
 | `/api/gpu`                    | GPU stats from sidecar agent     |
 | `/api/setup/*`                | Setup wizard endpoints           |
@@ -124,8 +122,7 @@ ollama-admin/
 - `Chat` / `Message` — Chat conversations and messages
 - `Log` — API request logs with token counts and latency
 - `Preset` — Saved chat parameter configurations
-- `CatalogModel` — Cached model catalog from ollama.com
-- `Alert` — Monitoring alert rules
+- `CatalogModel` — unused (catalog is cached in memory)
 - `ApiKey` — API keys for programmatic access
 - `Settings` — Key-value system settings
 
@@ -140,11 +137,8 @@ Reference `.env.example` for defaults. Key variables:
 | `NEXTAUTH_URL`            | App base URL                                       |
 | `DEFAULT_OLLAMA_URL`      | Default Ollama server URL                          |
 | `AUTH_DISABLED`            | `true` to bypass login (dev only)                 |
-| `LOG_RETENTION_DAYS`      | Log retention period (default: 90)                |
-| `LOG_STORE_PROMPTS`       | Store prompt content in logs (privacy)            |
+| `LOG_RETENTION_DAYS`      | Default log retention; the Settings value wins (default: 90, 0 = keep) |
 | `CATALOG_REFRESH_ENABLED` | Allow catalog refresh from ollama.com             |
-| `CATALOG_RATE_LIMIT_MS`   | Rate limit for catalog scraping (default: 2000)   |
-| `GPU_AGENT_ENABLED`       | Enable GPU monitoring sidecar                     |
 
 ---
 

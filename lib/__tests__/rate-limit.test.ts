@@ -85,3 +85,21 @@ describe("resetRateLimit", () => {
     expect(result.remaining).toBe(4);
   });
 });
+
+describe("getRateLimitKey", () => {
+  it("buckets API-key clients by key, not by a forgeable header", async () => {
+    const { getRateLimitKey } = await import("@/lib/with-rate-limit");
+    const { NextRequest } = await import("next/server");
+    const make = (headers: Record<string, string>) =>
+      getRateLimitKey(new NextRequest("http://localhost/api/proxy/api/tags", { headers }));
+
+    const a = make({ authorization: "Bearer oa-aaa", "x-forwarded-for": "1.1.1.1" });
+    const b = make({ authorization: "Bearer oa-aaa", "x-forwarded-for": "2.2.2.2" });
+    const c = make({ authorization: "Bearer oa-bbb" });
+
+    expect(a).toBe(b);
+    expect(a).not.toBe(c);
+    expect(a).not.toContain("oa-aaa");
+    expect(make({ "x-forwarded-for": "3.3.3.3, 10.0.0.1" })).toBe("ip:3.3.3.3");
+  });
+});

@@ -140,7 +140,8 @@
       "deleteError": "Couldn't get rid of it!",
       "deletePreset": "Ditch preset {name}, arr",
       "namePlaceholder": "Name yer preset..."
-    }
+    },
+    "streamError": "The reply sank: {error}"
   },
   "compare": {
     "title": "Ship Battle!",
@@ -186,7 +187,10 @@
       "embedding": "Memory",
       "thinking": "The Brain",
       "code": "Secret Scrolls"
-    }
+    },
+    "catalogErrorTitle": "The charts be lost",
+    "catalogError": "Couldn't fetch the charts from ollama.com. Check this ship can reach the open sea, then try again.",
+    "retry": "Try again"
   },
   "admin": {
     "models": {
@@ -232,10 +236,13 @@
       "active": "Sailing",
       "online": "On the seas!",
       "offline": "Shipwrecked!",
-      "deleteConfirm": "Scuttle this ship?!",
+      "deleteConfirm": "This also sinks the server's chats and logs. To keep 'em, deactivate the server instead.",
       "emptyTitle": "No ships in the fleet!",
       "emptyDescription": "Add yer first Ollama galleon to set sail, matey!",
-      "emptyAction": "Add a Galleon!"
+      "emptyAction": "Add a Galleon!",
+      "deleteTitle": "Scuttle the server",
+      "deleteSuccess": "Server scuttled",
+      "deleteError": "The server wouldn't sink. Check the logs."
     },
     "logs": {
       "title": "Captain's Log",
@@ -493,9 +500,6 @@
     "language": "Tongue",
     "loggingPrivacy": "Secrets & Logs",
     "logRetentionDays": "Keep log (days)",
-    "storePrompts": "Keep the parley",
-    "storePromptsYes": "Aye — keep everything",
-    "storePromptsNo": "Nay — just the numbers",
     "saveChanges": "SAVE THE ORDERS!",
     "saved": "Orders saved, arr!",
     "purgeLogs": "Toss old logs",
@@ -531,7 +535,8 @@
     "apiKeyDeleteError": "Couldn't burn it!",
     "database": "Ship's cargo hold",
     "connected": "Connected",
-    "databaseType": "SQLite (default)"
+    "databaseType": "SQLite (default)",
+    "logRetentionHint": "Logs older than this walk the plank every 6 hours. 0 keeps 'em forever."
   },
   "notFound": {
     "title": "Ye've sailed off the map, arr!",

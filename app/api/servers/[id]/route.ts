@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { normalizeOllamaUrl } from "@/lib/ollama";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   _req: NextRequest,
@@ -76,10 +77,26 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  try {
-    await prisma.server.delete({ where: { id: id } });
-    return NextResponse.json({ ok: true });
-  } catch {
+  const server = await prisma.server.findUnique({ where: { id: id } });
+  if (!server) {
     return NextResponse.json({ error: "Server not found" }, { status: 404 });
+  }
+
+  // Chats and logs reference the server with ON DELETE RESTRICT, so they go in
+  // the same transaction. The UI warns about this and offers deactivation.
+  try {
+    const [logs, chats] = await prisma.$transaction([
+      prisma.log.deleteMany({ where: { serverId: id } }),
+      prisma.chat.deleteMany({ where: { serverId: id } }),
+      prisma.server.delete({ where: { id: id } }),
+    ]);
+    logger.info("Server deleted", { name: server.name, logs: logs.count, chats: chats.count });
+    return NextResponse.json({ ok: true, deletedLogs: logs.count, deletedChats: chats.count });
+  } catch (error) {
+    logger.error("Failed to delete server", { id, error: String(error) });
+    return NextResponse.json(
+      { error: "The server could not be deleted. Nothing was removed; check the server logs." },
+      { status: 500 }
+    );
   }
 }

@@ -35,6 +35,19 @@ describe("requireAdmin", () => {
     expect(result).toBeNull();
   });
 
+  it("treats AUTH_DISABLED like the middleware does and grants admin", async () => {
+    vi.stubEnv("AUTH_DISABLED", "true");
+    try {
+      const { requireAdmin } = await import("@/lib/require-admin");
+      const result = await requireAdmin();
+
+      expect(result?.user.role).toBe("admin");
+      expect(getServerSession).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("returns null when no session", async () => {
     (getServerSession as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 

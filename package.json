@@ -1,6 +1,6 @@
 {
   "name": "ollama-admin",
-  "version": "0.15.8",
+  "version": "0.16.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,9 +9,10 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:browsers": "playwright install --with-deps chromium",
     "db:provider": "node scripts/prisma-provider.js",
     "db:generate": "npm run db:provider && prisma generate",
     "db:push": "npm run db:provider && prisma db push",
@@ -52,6 +53,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.4.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.1.6",

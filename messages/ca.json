@@ -140,7 +140,8 @@
       "deleteError": "Error eliminant preset",
       "deletePreset": "Eliminar preset {name}",
       "namePlaceholder": "Nom del preset..."
-    }
+    },
+    "streamError": "La resposta ha fallat: {error}"
   },
   "compare": {
     "title": "Comparar models",
@@ -188,7 +189,10 @@
       "embedding": "Embedding",
       "thinking": "Raonament",
       "code": "Codi"
-    }
+    },
+    "catalogErrorTitle": "Catàleg no disponible",
+    "catalogError": "No s'ha pogut carregar el catàleg de models d'ollama.com. Comprova que aquest servidor té accés a internet i torna-ho a provar.",
+    "retry": "Torna-ho a provar"
   },
   "admin": {
     "models": {
@@ -234,10 +238,13 @@
       "active": "Actiu",
       "online": "En línia",
       "offline": "Fora de línia",
-      "deleteConfirm": "Estàs segur que vols eliminar aquest servidor?",
+      "deleteConfirm": "També s'eliminaran els xats i els registres de sol·licituds del servidor. Per conservar-los, desactiva el servidor.",
       "emptyTitle": "No hi ha servidors configurats",
       "emptyDescription": "Afegeix el teu primer servidor Ollama per començar.",
-      "emptyAction": "Afegir servidor"
+      "emptyAction": "Afegir servidor",
+      "deleteTitle": "Elimina el servidor",
+      "deleteSuccess": "Servidor eliminat",
+      "deleteError": "No s'ha pogut eliminar el servidor. Revisa els registres del servidor."
     },
     "logs": {
       "title": "Registres",
@@ -495,9 +502,6 @@
     "language": "Idioma",
     "loggingPrivacy": "Registres i privacitat",
     "logRetentionDays": "Retenció de registres (dies)",
-    "storePrompts": "Emmagatzemar contingut dels prompts",
-    "storePromptsYes": "Sí — emmagatzema prompts i respostes complets",
-    "storePromptsNo": "No — emmagatzema només metadades (tokens, latència)",
     "saveChanges": "Desar canvis",
     "saved": "Configuració desada",
     "purgeLogs": "Purgar registres antics",
@@ -533,7 +537,8 @@
     "apiKeyDeleteError": "Error en eliminar la clau API",
     "database": "Base de dades",
     "connected": "Connectat",
-    "databaseType": "SQLite (per defecte)"
+    "databaseType": "SQLite (per defecte)",
+    "logRetentionHint": "Els registres de sol·licituds més antics s'eliminen automàticament cada 6 hores. 0 els conserva per sempre."
   },
   "notFound": {
     "title": "Pàgina no trobada",

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { prisma } from "@/lib/prisma";
+import { getUserAccess } from "@/lib/user-access";
 
 let setupCompleted = false;
 let setupCheckedAt = 0;
@@ -97,7 +98,8 @@ export async function proxy(req: NextRequest) {
 
   // Require authentication for everything else
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (!token) {
+  const access = token?.id ? await getUserAccess(token.id) : null;
+  if (!token || !access) {
     if (path.startsWith("/api/")) {
       logRequest(method, path, 401, Date.now() - start, "unauthorized");
       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
@@ -120,7 +122,7 @@ export async function proxy(req: NextRequest) {
     path.startsWith("/api/users") ||
     path.startsWith("/api/api-keys") ||
     path.startsWith("/settings");
-  if (isAdminOnly && token?.role !== "admin") {
+  if (isAdminOnly && access.role !== "admin") {
     logRequest(method, path, 403, Date.now() - start, "forbidden");
     const homeUrl = req.nextUrl.clone();
     homeUrl.pathname = "/";

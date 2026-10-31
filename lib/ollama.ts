@@ -157,6 +157,20 @@ export function buildOllamaUrl(baseUrl: string, path: string): string {
   return `${normalizedBaseUrl}${normalizedPath}`;
 }
 
+export async function readOllamaError(res: Response): Promise<string> {
+  try {
+    const body = await res.json();
+    if (typeof body?.error === "string" && body.error.trim()) return body.error.trim();
+  } catch {
+    // not JSON
+  }
+  return `${res.status} ${res.statusText}`.trim();
+}
+
+export function isTimeoutError(error: unknown): boolean {
+  return (error as { name?: unknown } | null)?.name === "TimeoutError";
+}
+
 /** Turn low-level fetch failures into guidance that is useful from a container. */
 export function formatOllamaConnectionError(
   baseUrl: string,
@@ -176,6 +190,10 @@ export function formatOllamaConnectionError(
     displayUrl = redactOllamaUrl(effectiveBaseUrl);
   } catch {
     return `Invalid Ollama URL: ${redactOllamaUrl(baseUrl)}`;
+  }
+
+  if (isTimeoutError(error)) {
+    return `Ollama at ${displayUrl} did not respond in time. It may be overloaded, asleep, or unreachable from this container.`;
   }
 
   const codes = collectErrorCodes(error);
@@ -251,6 +269,8 @@ export interface OllamaShowResponse {
   model_info: Record<string, unknown>;
 }
 
+export const OLLAMA_REQUEST_TIMEOUT_MS = 15_000;
+
 export async function ollamaFetch<T>(
   baseUrl: string,
   path: string,
@@ -259,6 +279,7 @@ export async function ollamaFetch<T>(
   const url = buildOllamaUrl(baseUrl, path);
   const res = await fetch(url, {
     ...options,
+    signal: options?.signal ?? AbortSignal.timeout(OLLAMA_REQUEST_TIMEOUT_MS),
     cache: "no-store",
     headers: {
       "Content-Type": "application/json",

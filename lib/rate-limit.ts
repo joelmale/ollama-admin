@@ -3,7 +3,7 @@ interface RateLimitEntry {
   lastRefill: number;
 }
 
-interface RateLimitConfig {
+export interface RateLimitConfig {
   maxRequests: number;
   windowMs: number;
 }

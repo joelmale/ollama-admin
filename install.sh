@@ -347,10 +347,7 @@ DEFAULT_OLLAMA_URL="${ollama_url}"
 NEXTAUTH_SECRET="${nextauth_secret}"
 NEXTAUTH_URL="http://localhost:${port}"
 LOG_RETENTION_DAYS=90
-LOG_STORE_PROMPTS=true
 CATALOG_REFRESH_ENABLED=true
-CATALOG_RATE_LIMIT_MS=2000
-GPU_AGENT_ENABLED=${gpu_enabled}
 GPU_BACKEND=${gpu_backend}
 ENVEOF
   print_ok "Generated .env"
@@ -361,7 +358,7 @@ version: "3.9"
 
 services:
   ollama-admin:
-    image: ghcr.io/ollama-admin/ollama-admin:${VERSION}
+    image: ghcr.io/joelmale/ollama-admin:${VERSION}
     # Repair the SQLite volume, then the entrypoint drops to UID/GID 1001.
     user: "0:0"
     ports:
@@ -390,7 +387,7 @@ COMPOSEEOF
     cat >> "$COMPOSE_FILE" <<COMPOSEEOF
 
   gpu-agent:
-    image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:${VERSION}
+    image: ghcr.io/joelmale/ollama-admin-gpu-agent:${VERSION}
 COMPOSEEOF
 
     if [ "$gpu_backend" = "nvidia" ]; then

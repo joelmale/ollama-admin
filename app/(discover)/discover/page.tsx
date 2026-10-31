@@ -3,7 +3,8 @@
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Search, Check, Download, Loader2 } from "lucide-react";
+import { Search, Check, Download, Loader2, CloudOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -71,6 +72,8 @@ export default function DiscoverPage() {
   const [search, setSearch] = useState("");
   const [selectedCaps, setSelectedCaps] = useState<string[]>(["text"]);
   const [loading, setLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [downloadedModels, setDownloadedModels] = useState<Set<string>>(new Set());
   const [downloadingRefs, setDownloadingRefs] = useState<Set<string>>(new Set());
   const [gpuSpecs, setGpuSpecs] = useState<GpuSpecs | null>(null);
@@ -164,13 +167,23 @@ export default function DiscoverPage() {
       const params = new URLSearchParams();
       if (search) params.set("q", search);
       if (selectedCaps.length > 0) params.set("c", selectedCaps.join(","));
-      const r = await fetch(`/api/catalog?${params}`);
-      const data = await r.json();
-      if (Array.isArray(data)) setModels(data);
-      setLoading(false);
+      try {
+        const r = await fetch(`/api/catalog?${params}`);
+        const data = await r.json().catch(() => null);
+        if (r.ok && Array.isArray(data)) {
+          setModels(data);
+          setCatalogError(null);
+        } else {
+          setCatalogError(data?.error ?? t("catalogError"));
+        }
+      } catch {
+        setCatalogError(t("catalogError"));
+      } finally {
+        setLoading(false);
+      }
     };
     void loadCatalog();
-  }, [search, selectedCaps]);
+  }, [search, selectedCaps, reloadKey, t]);
 
   const toggleCap = (cap: string) => {
     setSelectedCaps((prev) => prev.includes(cap) ? prev.filter((c) => c !== cap) : [...prev, cap]);
@@ -252,6 +265,11 @@ export default function DiscoverPage() {
     ? `${gpuSpecs.gpuName.replace(/NVIDIA GeForce /i, "").replace(/NVIDIA /i, "")} · ${Math.round(gpuSpecs.vramGB)}GB`
     : null;
 
+  let listState: "loading" | "error" | "empty" | "ready" = "ready";
+  if (loading) listState = "loading";
+  else if (catalogError) listState = "error";
+  else if (flatRows.length === 0) listState = "empty";
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -321,7 +339,7 @@ export default function DiscoverPage() {
       )}
 
       {/* Model list */}
-      {loading ? (
+      {listState === "loading" && (
         <div className="mt-4 overflow-hidden rounded-lg border border-[hsl(var(--border))]">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="flex items-center gap-6 border-b border-[hsl(var(--border))] px-4 py-3 last:border-0">
@@ -332,9 +350,28 @@ export default function DiscoverPage() {
             </div>
           ))}
         </div>
-      ) : flatRows.length === 0 ? (
+      )}
+      {listState === "error" && (
+        <EmptyState
+          icon={CloudOff}
+          title={t("catalogErrorTitle")}
+          description={catalogError ?? ""}
+          action={
+            <Button
+              onClick={() => {
+                setLoading(true);
+                setReloadKey((k) => k + 1);
+              }}
+            >
+              {t("retry")}
+            </Button>
+          }
+        />
+      )}
+      {listState === "empty" && (
         <EmptyState icon={Search} title={t("emptyTitle")} description={t("emptyDescription")} />
-      ) : (
+      )}
+      {listState === "ready" && (
         <div className="mt-4 overflow-hidden rounded-lg border border-[hsl(var(--border))]">
           {/* Column headers */}
           <div className="flex items-center gap-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.6)] px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-[hsl(var(--muted-foreground))]">

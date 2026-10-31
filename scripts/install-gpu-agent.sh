@@ -4,10 +4,10 @@ set -euo pipefail
 # ─────────────────────────────────────────────
 # Ollama Admin GPU Agent — One-line installer
 # Install on any server with an NVIDIA GPU.
-# Usage: curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install-gpu-agent.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install-gpu-agent.sh | bash
 # ─────────────────────────────────────────────
 
-IMAGE="ghcr.io/ollama-admin/ollama-admin-gpu-agent"
+IMAGE="ghcr.io/joelmale/ollama-admin-gpu-agent"
 VERSION="${GPU_AGENT_VERSION:-latest}"
 INSTALL_DIR="${GPU_AGENT_DIR:-$HOME/ollama-admin-gpu-agent}"
 PORT="${GPU_AGENT_PORT:-11435}"

@@ -3,10 +3,10 @@ set -euo pipefail
 
 # ─────────────────────────────────────────────
 # Ollama Admin — One-line installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 # ─────────────────────────────────────────────
 
-IMAGE="ghcr.io/ollama-admin/ollama-admin"
+IMAGE="ghcr.io/joelmale/ollama-admin"
 VERSION="${OLLAMA_ADMIN_VERSION:-latest}"
 INSTALL_DIR="${OLLAMA_ADMIN_DIR:-$HOME/ollama-admin}"
 PORT="${OLLAMA_ADMIN_PORT:-3000}"
@@ -252,7 +252,6 @@ services:
       NEXTAUTH_SECRET: \${NEXTAUTH_SECRET:-$(openssl rand -hex 32)}
       NEXTAUTH_URL: \${NEXTAUTH_URL:-http://localhost:${PORT}}
       LOG_RETENTION_DAYS: \${LOG_RETENTION_DAYS:-90}
-      GPU_AGENT_ENABLED: \${GPU_AGENT_ENABLED:-false}
     volumes:
       - ollama-admin-data:/data
     restart: unless-stopped

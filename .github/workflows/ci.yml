@@ -15,8 +15,29 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm test
+      # Fails if server-side coverage drops below the floors in vitest.config.ts.
+      - run: npm run test:coverage
       - run: npx tsc --noEmit
+
+  e2e:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+      # Lifecycle scripts stay off; prisma generate is the only one the app needs.
+      - run: npm ci --ignore-scripts
+      - run: npm run db:generate
+      - run: npm run test:e2e:browsers
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
   build-check:
     runs-on: ubuntu-24.04

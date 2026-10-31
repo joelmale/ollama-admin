@@ -16,26 +16,14 @@ test.describe("Navigation", () => {
     await expect(page).toHaveURL(/\/discover/);
   });
 
-  test("sidebar navigates to admin pages", async ({ page }) => {
-    await page.goto("/");
-
-    await page.click('a[href="/admin/models"]');
-    await expect(page).toHaveURL(/\/admin\/models/);
-
-    await page.click('a[href="/admin/servers"]');
-    await expect(page).toHaveURL(/\/admin\/servers/);
-
-    await page.click('a[href="/admin/logs"]');
-    await expect(page).toHaveURL(/\/admin\/logs/);
-
-    await page.click('a[href="/admin/metrics"]');
-    await expect(page).toHaveURL(/\/admin\/metrics/);
-
-    await page.click('a[href="/admin/gpu"]');
-    await expect(page).toHaveURL(/\/admin\/gpu/);
-
-
-  });
+  // AUTH_DISABLED has no session, so the sidebar hides the admin group; visit the pages directly.
+  for (const path of ["/admin/models", "/admin/servers", "/admin/logs", "/admin/metrics", "/admin/users", "/admin/api-keys", "/gpu"]) {
+    test(`admin page ${path} loads`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(page.getByRole("heading").first()).toBeVisible();
+    });
+  }
 
   test("settings page loads", async ({ page }) => {
     await page.goto("/settings");

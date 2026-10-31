@@ -81,3 +81,6 @@ ollama-admin-data/
 next-env.d.ts
 
 .claude
+
+# Playwright throwaway database
+e2e/.tmp/

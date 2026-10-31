@@ -22,7 +22,6 @@ export default function SettingsPage() {
   const { toast } = useToast();
 
   const [logRetentionDays, setLogRetentionDays] = useState("90");
-  const [logStorePrompts, setLogStorePrompts] = useState("true");
   const [rateLimitMax, setRateLimitMax] = useState("60");
   const [rateLimitWindow, setRateLimitWindow] = useState("60");
 
@@ -41,7 +40,6 @@ export default function SettingsPage() {
       const res = await fetch("/api/settings");
       const settings = await res.json();
       if (settings.logRetentionDays) setLogRetentionDays(settings.logRetentionDays);
-      if (settings.logStorePrompts) setLogStorePrompts(settings.logStorePrompts);
       if (settings.rateLimitMax) setRateLimitMax(settings.rateLimitMax);
       if (settings.rateLimitWindow) setRateLimitWindow(settings.rateLimitWindow);
     };
@@ -54,9 +52,13 @@ export default function SettingsPage() {
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logRetentionDays, logStorePrompts, rateLimitMax, rateLimitWindow }),
+        body: JSON.stringify({ logRetentionDays, rateLimitMax, rateLimitWindow }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        toast(data?.error ?? t("saveError"), "error");
+        return;
+      }
       toast(t("saved"), "success");
     } catch {
       toast(t("saveError"), "error");
@@ -65,12 +67,14 @@ export default function SettingsPage() {
     }
   };
 
+  const retentionDays = Number.parseInt(logRetentionDays, 10);
+  const canPurge = Number.isInteger(retentionDays) && retentionDays >= 1;
+
   const purgeOldLogs = async () => {
     setPurging(true);
     try {
-      const days = parseInt(logRetentionDays, 10);
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
+      cutoff.setDate(cutoff.getDate() - retentionDays);
       const res = await fetch(`/api/logs?purge=true&before=${cutoff.toISOString()}`, {
         method: "DELETE",
       });
@@ -198,19 +202,13 @@ export default function SettingsPage() {
           <Input
             label={t("logRetentionDays")}
             type="number"
-            min={1}
+            min={0}
             value={logRetentionDays}
             onChange={(e) => setLogRetentionDays(e.target.value)}
           />
-
-          <Select
-            label={t("storePrompts")}
-            value={logStorePrompts}
-            onChange={(e) => setLogStorePrompts(e.target.value)}
-          >
-            <option value="true">{t("storePromptsYes")}</option>
-            <option value="false">{t("storePromptsNo")}</option>
-          </Select>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            {t("logRetentionHint")}
+          </p>
         </CardContent>
       </Card>
 
@@ -279,6 +277,7 @@ export default function SettingsPage() {
           variant="destructive"
           onClick={() => setConfirmPurge(true)}
           loading={purging}
+          disabled={!canPurge}
         >
           <Trash2 className="mr-1 h-4 w-4" />
           {t("purgeLogs")}

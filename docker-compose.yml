@@ -2,8 +2,8 @@ version: "3.9"
 
 services:
   ollama-admin:
-    image: ghcr.io/ollama-admin/ollama-admin:${VERSION:-latest}
-    pull_policy: always
+    image: ghcr.io/joelmale/ollama-admin:${VERSION:-0.16.0}
+    pull_policy: missing
     # Repair the SQLite volume, then the entrypoint drops to UID/GID 1001.
     user: "0:0"
     build:
@@ -24,10 +24,7 @@ services:
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-changeme}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-90}
-      LOG_STORE_PROMPTS: ${LOG_STORE_PROMPTS:-true}
       CATALOG_REFRESH_ENABLED: ${CATALOG_REFRESH_ENABLED:-true}
-      CATALOG_RATE_LIMIT_MS: ${CATALOG_RATE_LIMIT_MS:-2000}
-      GPU_AGENT_ENABLED: ${GPU_AGENT_ENABLED:-false}
     volumes:
       - ollama-admin-data:/data
     restart: unless-stopped
@@ -49,7 +46,7 @@ services:
   #
   # NVIDIA (requires NVIDIA Container Toolkit on host):
   # gpu-agent:
-  #   image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:${VERSION:-latest}
+  #   image: ghcr.io/joelmale/ollama-admin-gpu-agent:${VERSION:-latest}
   #   build: ./gpu-agent
   #   environment:
   #     GPU_BACKEND: nvidia
@@ -66,7 +63,7 @@ services:
   #
   # AMD (requires ROCm drivers on host):
   # gpu-agent:
-  #   image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:${VERSION:-latest}
+  #   image: ghcr.io/joelmale/ollama-admin-gpu-agent:${VERSION:-latest}
   #   build: ./gpu-agent
   #   environment:
   #     GPU_BACKEND: amd

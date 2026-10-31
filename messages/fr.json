@@ -140,7 +140,8 @@
       "deleteError": "Erreur lors de la suppression du preset",
       "deletePreset": "Supprimer le preset {name}",
       "namePlaceholder": "Nom du preset..."
-    }
+    },
+    "streamError": "La réponse a échoué : {error}"
   },
   "compare": {
     "title": "Comparer les modèles",
@@ -188,7 +189,10 @@
       "embedding": "Embedding",
       "thinking": "Raisonnement",
       "code": "Code"
-    }
+    },
+    "catalogErrorTitle": "Catalogue indisponible",
+    "catalogError": "Impossible de charger le catalogue de modèles depuis ollama.com. Vérifiez que ce serveur accède à Internet, puis réessayez.",
+    "retry": "Réessayer"
   },
   "admin": {
     "models": {
@@ -234,10 +238,13 @@
       "active": "Actif",
       "online": "En ligne",
       "offline": "Hors ligne",
-      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce serveur ?",
+      "deleteConfirm": "Les conversations et les journaux de requêtes du serveur seront aussi supprimés. Pour les conserver, désactivez plutôt le serveur.",
       "emptyTitle": "Aucun serveur configuré",
       "emptyDescription": "Ajoutez votre premier serveur Ollama pour commencer.",
-      "emptyAction": "Ajouter un serveur"
+      "emptyAction": "Ajouter un serveur",
+      "deleteTitle": "Supprimer le serveur",
+      "deleteSuccess": "Serveur supprimé",
+      "deleteError": "Impossible de supprimer le serveur. Consultez les journaux du serveur."
     },
     "logs": {
       "title": "Journaux",
@@ -495,9 +502,6 @@
     "language": "Langue",
     "loggingPrivacy": "Journalisation et confidentialité",
     "logRetentionDays": "Rétention des journaux (jours)",
-    "storePrompts": "Stocker le contenu des prompts",
-    "storePromptsYes": "Oui — stocker les prompts et réponses complets",
-    "storePromptsNo": "Non — stocker uniquement les métadonnées (tokens, latence)",
     "saveChanges": "Enregistrer les modifications",
     "saved": "Paramètres enregistrés",
     "purgeLogs": "Purger les anciens journaux",
@@ -533,7 +537,8 @@
     "apiKeyDeleteError": "Erreur lors de la suppression de la clé API",
     "database": "Base de données",
     "connected": "Connecté",
-    "databaseType": "SQLite (par défaut)"
+    "databaseType": "SQLite (par défaut)",
+    "logRetentionHint": "Les journaux de requêtes plus anciens sont supprimés automatiquement toutes les 6 heures. 0 les conserve indéfiniment."
   },
   "notFound": {
     "title": "Page introuvable",

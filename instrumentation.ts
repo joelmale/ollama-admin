@@ -5,4 +5,9 @@ export async function register() {
   console.log(
     `${new Date().toISOString()} [INFO] Ollama Admin v${pkg.version} | Node ${p.version} | PID ${p.pid}`
   );
+
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { startBackgroundJobs } = await import("./lib/runtime-settings");
+    startBackgroundJobs();
+  }
 }

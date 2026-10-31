@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getLogPurgeStatus } from "@/lib/runtime-settings";
+import pkg from "@/package.json";
 
 export const dynamic = "force-dynamic";
 
@@ -9,35 +11,44 @@ interface HealthStatus {
   timestamp: string;
   checks: {
     database: "ok" | "error";
+    logPurge: "ok" | "error" | "pending";
     uptime: number;
   };
+  logPurge: { lastRunAt: string | null; lastError: string | null };
 }
 
 const startTime = Date.now();
 
 export async function GET() {
   let databaseStatus: "ok" | "error" = "ok";
-  let status: "ok" | "degraded" | "error" = "ok";
 
-  // Check database connectivity
   try {
     await prisma.$queryRaw`SELECT 1`;
   } catch {
     databaseStatus = "error";
-    status = "error";
   }
+
+  const purge = getLogPurgeStatus();
+  let logPurgeStatus: "ok" | "error" | "pending" = "pending";
+  if (purge.lastError) logPurgeStatus = "error";
+  else if (purge.lastRunAt) logPurgeStatus = "ok";
+
+  // A failed purge is reported but does not fail the container healthcheck.
+  let status: "ok" | "degraded" | "error" = "ok";
+  if (databaseStatus === "error") status = "error";
+  else if (logPurgeStatus === "error") status = "degraded";
 
   const health: HealthStatus = {
     status,
-    version: process.env.npm_package_version || "unknown",
+    version: pkg.version,
     timestamp: new Date().toISOString(),
     checks: {
       database: databaseStatus,
+      logPurge: logPurgeStatus,
       uptime: Math.floor((Date.now() - startTime) / 1000),
     },
+    logPurge: purge,
   };
 
-  const httpStatus = status === "error" ? 503 : 200;
-
-  return NextResponse.json(health, { status: httpStatus });
+  return NextResponse.json(health, { status: status === "error" ? 503 : 200 });
 }

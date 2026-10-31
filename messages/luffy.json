@@ -140,7 +140,8 @@
       "deleteError": "Couldn't get rid of it!",
       "deletePreset": "Ditch preset {name}",
       "namePlaceholder": "Name it..."
-    }
+    },
+    "streamError": "The reply failed: {error}"
   },
   "compare": {
     "title": "Model Battle! Shishishi!",
@@ -186,7 +187,10 @@
       "embedding": "Memory",
       "thinking": "Brain",
       "code": "Secret Code"
-    }
+    },
+    "catalogErrorTitle": "Catalog unavailable",
+    "catalogError": "Could not load the model catalog from ollama.com. Check that this server can reach the internet, then retry.",
+    "retry": "Retry"
   },
   "admin": {
     "models": {
@@ -232,10 +236,13 @@
       "active": "Sailing",
       "online": "On the sea!",
       "offline": "Sunk!",
-      "deleteConfirm": "Get rid of this ship?!",
+      "deleteConfirm": "This also deletes the server's chats and request logs. To keep them, deactivate the server instead.",
       "emptyTitle": "No ships!",
       "emptyDescription": "Get your first Ollama ship to start! You can't be King of the Pirates without a ship!",
-      "emptyAction": "Get a Ship!"
+      "emptyAction": "Get a Ship!",
+      "deleteTitle": "Delete server",
+      "deleteSuccess": "Server deleted",
+      "deleteError": "The server could not be deleted. Check the server logs."
     },
     "logs": {
       "title": "Ship's Log",
@@ -493,9 +500,6 @@
     "language": "Talking style",
     "loggingPrivacy": "Secrets",
     "logRetentionDays": "Keep logs (days)",
-    "storePrompts": "Save what we said",
-    "storePromptsYes": "Yeah — save everything",
-    "storePromptsNo": "Nah — just numbers",
     "saveChanges": "SAVE IT!",
     "saved": "Saved! Shishishi!",
     "purgeLogs": "Delete old logs",
@@ -531,7 +535,8 @@
     "apiKeyDeleteError": "Couldn't throw it away!",
     "database": "Data storage",
     "connected": "Connected",
-    "databaseType": "SQLite (default)"
+    "databaseType": "SQLite (default)",
+    "logRetentionHint": "Request logs older than this are deleted automatically every 6 hours. 0 keeps them forever."
   },
   "notFound": {
     "title": "I'M LOST! Shishishi!",

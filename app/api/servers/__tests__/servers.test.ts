@@ -10,6 +10,9 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    log: { deleteMany: vi.fn() },
+    chat: { deleteMany: vi.fn() },
+    $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   },
 }));
 
@@ -198,10 +201,11 @@ describe("DELETE /api/servers/[id]", () => {
     expect(prisma.server.delete).not.toHaveBeenCalled();
   });
 
-  it("deletes a server", async () => {
-    (prisma.server.delete as ReturnType<typeof vi.fn>).mockResolvedValue(
-      mockServer
-    );
+  it("deletes a used server together with its chats and logs", async () => {
+    (prisma.server.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockServer);
+    (prisma.log.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 12 });
+    (prisma.chat.deleteMany as ReturnType<typeof vi.fn>).mockResolvedValue({ count: 3 });
+    (prisma.server.delete as ReturnType<typeof vi.fn>).mockResolvedValue(mockServer);
 
     const { DELETE } = await import("@/app/api/servers/[id]/route");
     const req = new Request("http://localhost/api/servers/srv_1", {
@@ -210,12 +214,14 @@ describe("DELETE /api/servers/[id]", () => {
     const res = await DELETE(req as any, { params: Promise.resolve({ id: "srv_1" }) });
 
     expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, deletedLogs: 12, deletedChats: 3 });
+    expect(prisma.log.deleteMany).toHaveBeenCalledWith({ where: { serverId: "srv_1" } });
+    expect(prisma.chat.deleteMany).toHaveBeenCalledWith({ where: { serverId: "srv_1" } });
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
   it("returns 404 for non-existent server", async () => {
-    (prisma.server.delete as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error("Not found")
-    );
+    (prisma.server.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     const { DELETE } = await import("@/app/api/servers/[id]/route");
     const req = new Request("http://localhost/api/servers/nope", {
@@ -224,6 +230,24 @@ describe("DELETE /api/servers/[id]", () => {
     const res = await DELETE(req as any, { params: Promise.resolve({ id: "nope" }) });
 
     expect(res.status).toBe(404);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed delete as a server error, not a missing server", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    (prisma.server.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockServer);
+    (prisma.$transaction as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("Foreign key constraint failed")
+    );
+
+    const { DELETE } = await import("@/app/api/servers/[id]/route");
+    const req = new Request("http://localhost/api/servers/srv_1", {
+      method: "DELETE",
+    });
+    const res = await DELETE(req as any, { params: Promise.resolve({ id: "srv_1" }) });
+
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toContain("Nothing was removed");
   });
 });
 

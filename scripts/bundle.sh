@@ -14,8 +14,8 @@ set -euo pipefail
 #   bash scripts/bundle.sh --version 0.11.0 --with-gpu-agent --output /tmp/bundle.tar.gz
 # ─────────────────────────────────────────────
 
-APP_IMAGE="ghcr.io/ollama-admin/ollama-admin"
-GPU_IMAGE="ghcr.io/ollama-admin/ollama-admin-gpu-agent"
+APP_IMAGE="ghcr.io/joelmale/ollama-admin"
+GPU_IMAGE="ghcr.io/joelmale/ollama-admin-gpu-agent"
 
 VERSION="latest"
 WITH_GPU_AGENT=false

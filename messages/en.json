@@ -140,7 +140,8 @@
       "deleteError": "Error deleting preset",
       "deletePreset": "Delete preset {name}",
       "namePlaceholder": "Preset name..."
-    }
+    },
+    "streamError": "The reply failed: {error}"
   },
   "compare": {
     "title": "Compare Models",
@@ -186,7 +187,10 @@
       "embedding": "Embedding",
       "thinking": "Thinking",
       "code": "Code"
-    }
+    },
+    "catalogErrorTitle": "Catalog unavailable",
+    "catalogError": "Could not load the model catalog from ollama.com. Check that this server can reach the internet, then retry.",
+    "retry": "Retry"
   },
   "admin": {
     "models": {
@@ -232,10 +236,13 @@
       "active": "Active",
       "online": "Online",
       "offline": "Offline",
-      "deleteConfirm": "Are you sure you want to delete this server?",
+      "deleteConfirm": "This also deletes the server's chats and request logs. To keep them, deactivate the server instead.",
       "emptyTitle": "No servers configured",
       "emptyDescription": "Add your first Ollama server to get started.",
-      "emptyAction": "Add Server"
+      "emptyAction": "Add Server",
+      "deleteTitle": "Delete server",
+      "deleteSuccess": "Server deleted",
+      "deleteError": "The server could not be deleted. Check the server logs."
     },
     "logs": {
       "title": "Logs",
@@ -493,9 +500,6 @@
     "language": "Language",
     "loggingPrivacy": "Logging & Privacy",
     "logRetentionDays": "Log retention (days)",
-    "storePrompts": "Store prompt content",
-    "storePromptsYes": "Yes — store full prompts and responses",
-    "storePromptsNo": "No — store only metadata (tokens, latency)",
     "saveChanges": "Save Changes",
     "saved": "Settings saved",
     "purgeLogs": "Purge Old Logs",
@@ -531,7 +535,8 @@
     "apiKeyDeleteError": "Error deleting API key",
     "database": "Database",
     "connected": "Connected",
-    "databaseType": "SQLite (default)"
+    "databaseType": "SQLite (default)",
+    "logRetentionHint": "Request logs older than this are deleted automatically every 6 hours. 0 keeps them forever."
   },
   "notFound": {
     "title": "Page not found",

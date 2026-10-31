@@ -8,13 +8,13 @@
   It's the difference between <em>using</em> Ollama and <em>operating</em> Ollama.
 </p>
 <p align="center">
-  <a href="https://github.com/ollama-admin/ollama-admin/actions/workflows/ci.yml">
-    <img src="https://github.com/ollama-admin/ollama-admin/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <a href="https://github.com/joelmale/ollama-admin/actions/workflows/ci.yml">
+    <img src="https://github.com/joelmale/ollama-admin/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
-  <a href="https://github.com/ollama-admin/ollama-admin/releases/latest">
-    <img src="https://img.shields.io/github/v/release/ollama-admin/ollama-admin" alt="Latest release" />
+  <a href="https://github.com/joelmale/ollama-admin/releases/latest">
+    <img src="https://img.shields.io/github/v/release/joelmale/ollama-admin" alt="Latest release" />
   </a>
-  <a href="https://github.com/ollama-admin/ollama-admin/pkgs/container/ollama-admin">
+  <a href="https://github.com/joelmale/ollama-admin/pkgs/container/ollama-admin">
     <img src="https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker" alt="Docker" />
   </a>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License" />
@@ -85,7 +85,7 @@ And yes, it also has a full-featured chat interface with streaming, model compar
 ### Option 1 — One-liner (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 ```
 
 Creates `~/ollama-admin/`, pulls the image from ghcr.io, and starts the container. Open [http://localhost:3000](http://localhost:3000) — the setup wizard takes it from there.
@@ -97,11 +97,11 @@ Creates `~/ollama-admin/`, pulls the image from ghcr.io, and starts the containe
 # Custom port and remote Ollama server
 OLLAMA_ADMIN_PORT=8080 \
 DEFAULT_OLLAMA_URL=http://192.168.1.50:11434 \
-  curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 
 # Pin to a specific version
 OLLAMA_ADMIN_VERSION=0.11.0 \
-  curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 ```
 
 </details>
@@ -113,7 +113,7 @@ OLLAMA_ADMIN_VERSION=0.11.0 \
 For production deployments or when you need full control over the configuration.
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 cp .env.docker.example .env   # edit NEXTAUTH_SECRET and other settings as needed
 docker compose up -d
@@ -145,7 +145,7 @@ Uncomment the `gpu-agent` service in `docker-compose.yml`:
 
 ```yaml
 gpu-agent:
-  image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:latest
+  image: ghcr.io/joelmale/ollama-admin-gpu-agent:latest
   runtime: nvidia
   environment:
     NVIDIA_VISIBLE_DEVICES: all
@@ -155,7 +155,7 @@ gpu-agent:
   restart: unless-stopped
 ```
 
-Set `GPU_AGENT_ENABLED=true` in `.env`, then `docker compose up -d`.
+Run `docker compose up -d`, then set the server's GPU Agent URL (e.g. `http://gpu-agent:11435`) in **Admin → Servers → edit server**.
 
 </details>
 
@@ -164,7 +164,7 @@ Set `GPU_AGENT_ENABLED=true` in `.env`, then `docker compose up -d`.
 
 ```yaml
 gpu-agent:
-  image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:latest
+  image: ghcr.io/joelmale/ollama-admin-gpu-agent:latest
   environment:
     GPU_BACKEND: amd
   devices:
@@ -178,7 +178,7 @@ gpu-agent:
   restart: unless-stopped
 ```
 
-Set `GPU_AGENT_ENABLED=true` in `.env`, then `docker compose up -d`.
+Run `docker compose up -d`, then set the server's GPU Agent URL (e.g. `http://gpu-agent:11435`) in **Admin → Servers → edit server**.
 
 </details>
 
@@ -191,7 +191,7 @@ For servers with no internet access, private registries (Harbor, Nexus), or high
 **Step 1 — on a machine with internet access, clone the repo and create the bundle:**
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 
 # Web app only
@@ -253,7 +253,7 @@ The script runs `docker load` on the images, generates a `docker-compose.yml`, a
 ### Option 4 — Local development
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 cp .env.example .env
 npm install
@@ -275,7 +275,7 @@ This is the core of what makes Ollama Admin different. The GPU Agent is a lightw
 |---|---|
 | **VRAM usage** | Used / total memory per GPU — know exactly how much room you have for another model |
 | **Models in memory** | Which models are currently loaded and consuming VRAM |
-| **Temperature** | Real-time GPU temperature with configurable threshold alerts |
+| **Temperature** | Real-time GPU temperature |
 | **Utilization** | GPU compute utilization percentage |
 | **Power draw** | Current power consumption per GPU |
 | **Tokens/s** | Throughput calculated from request logs — per model, per server |
@@ -293,7 +293,7 @@ This is the core of what makes Ollama Admin different. The GPU Agent is a lightw
 
 ```bash
 # One-liner (online)
-curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install-gpu-agent.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install-gpu-agent.sh | bash
 ```
 
 <details>
@@ -313,10 +313,6 @@ GPU_BACKEND=nvidia python main.py   # or: amd, intel, apple, auto
 </details>
 
 Runs on port `11435` by default. Connect it in Ollama Admin → **Admin → Servers** → edit a server → set **GPU Agent URL** to `http://<gpu-server-ip>:11435`.
-
-### Alerts
-
-Set threshold-based alerts for GPU temperature, VRAM usage, error rates, and latency. Get warned before your GPU runs out of memory or overheats — from **Admin → Alerts**.
 
 ### Endpoints
 
@@ -339,7 +335,7 @@ All Ollama traffic goes through `/api/proxy` — never directly from clients to 
 - **Multi-client support** — point any app (LangChain, Open WebUI, custom scripts, CI pipelines) at the proxy instead of Ollama directly. All traffic flows through one place.
 - **Per-client API keys** — create a separate `oa-` key for each app or team. Revoke one key without touching the others. See usage broken down by key in the metrics dashboard.
 - **Rate limiting** — per-IP token bucket prevents any single client from saturating your GPU.
-- **Privacy control** — set `LOG_STORE_PROMPTS=false` to log only metadata (tokens, latency) without storing prompt content.
+- **Privacy** — proxy logs hold metadata only (model, tokens, latency, status, key, IP); prompt and response content is never written to the request log.
 - **Multi-server routing** — pass `?serverId=` to route a request to a specific Ollama instance. Your clients never need to know which server is behind the proxy.
 
 ```bash
@@ -434,13 +430,28 @@ Copy `.env.example` to `.env` and adjust as needed.
 | `NEXTAUTH_URL` | `http://localhost:3000` | Public app URL — must match your deployment URL |
 | `DEFAULT_OLLAMA_URL` | `http://localhost:11434` outside Docker; `http://host.docker.internal:11434` in the Docker template | Default Ollama server URL |
 | `AUTH_DISABLED` | `false` | Bypass login entirely — **dev only, never in production** |
-| `LOG_RETENTION_DAYS` | `90` | Auto-purge logs older than N days (`0` = never purge) |
-| `LOG_STORE_PROMPTS` | `true` | Store full prompt/response content; set `false` for metadata-only logging |
-| `CATALOG_REFRESH_ENABLED` | `true` | Allow admins to refresh the model catalog from ollama.com |
-| `CATALOG_RATE_LIMIT_MS` | `2000` | Minimum ms between catalog scrape requests |
-| `GPU_AGENT_ENABLED` | `false` | Show GPU monitoring UI and enable `/api/gpu` |
-| `GITHUB_CLIENT_ID` | — | GitHub OAuth client ID (optional) |
-| `GITHUB_CLIENT_SECRET` | — | GitHub OAuth client secret (optional) |
+| `LOG_RETENTION_DAYS` | `90` | Default for purging request logs older than N days (`0` = never). The value saved in **Settings** takes precedence. The purge runs at startup and every 6 hours. |
+| `CATALOG_REFRESH_ENABLED` | `true` | Allow the model catalog to be fetched from ollama.com; `false` serves only what is already cached |
+
+---
+
+## 💾 Backups, upgrades and health
+
+**Backups (SQLite).** All state lives in the `ollama-admin-data` volume. Before an upgrade that has pending database migrations, the container copies the database to `/data/backups/` and keeps the newest five (`DB_BACKUP_KEEP` changes this). For your own backups, stop the container and copy the volume:
+
+```bash
+docker compose stop ollama-admin
+docker run --rm -v ollama-admin_ollama-admin-data:/data -v "$PWD":/backup alpine cp /data/ollama-admin.db /backup/
+docker compose start ollama-admin
+```
+
+To restore, stop the container, copy a backup over `/data/ollama-admin.db`, and start it again.
+
+**PostgreSQL.** The checked-in migrations are SQLite-only, so PostgreSQL schemas are synced with `prisma db push`, which refuses changes that would drop data. Take a `pg_dump` before upgrading.
+
+**Upgrading.** Compose pins the image to a release (`VERSION` overrides it). Set `VERSION` or pull a newer `docker-compose.yml`, then `docker compose up -d`. Migrations run at start-up.
+
+**Health.** The image has a Docker `HEALTHCHECK` against `/api/health`, so `docker ps` shows `healthy` / `unhealthy`. The endpoint returns `503` when the database is unreachable and `"status": "degraded"` when the background log purge last failed, with the error in `logPurge.lastError`.
 
 ---
 
@@ -495,7 +506,6 @@ All Ollama traffic goes through the `/api/proxy` gateway — never directly from
 | `/admin/logs` | Request logs with filters, pagination, and export |
 | `/admin/metrics` | Usage graphs and performance analytics |
 | `/admin/gpu` | GPU status, VRAM, and temperature |
-| `/admin/alerts` | Alert rules and triggered warnings |
 | `/settings` | Theme, density, language, API keys, rate limits, database info |
 
 ---
@@ -582,9 +592,6 @@ Generate API keys from **Settings → API Keys**.
 | `GET` | `/api/logs` | Request logs — filterable by server, model, date, status |
 | `DELETE` | `/api/logs` | Purge logs before a given date |
 | `GET` | `/api/logs/export` | Export logs (`?format=csv\|json`) |
-| `GET` | `/api/alerts` | List alert rules |
-| `POST` | `/api/alerts` | Create alert rule |
-| `GET` | `/api/alerts/check` | Evaluate all active alerts |
 
 </details>
 
@@ -645,7 +652,7 @@ Generate API keys from **Settings → API Keys**.
 ### Setup
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 cp .env.example .env
 npm install
@@ -732,7 +739,6 @@ See the [Docker host networking guidance](https://docs.docker.com/compose/how-to
 <summary><strong>GPU not detected</strong></summary>
 
 - Confirm NVIDIA drivers work: `nvidia-smi`
-- Set `GPU_AGENT_ENABLED=true` in `.env` and restart
 - Check GPU Agent logs: `docker compose logs gpu-agent`
 - Confirm the GPU Agent URL is set in **Admin → Servers → edit server**
 
@@ -779,7 +785,6 @@ The entrypoint repairs only the SQLite database and its sidecar files, then imme
 <details>
 <summary><strong>Logs not appearing</strong></summary>
 
-- `LOG_STORE_PROMPTS=false` stores only metadata (tokens, latency), not content
 - Confirm the proxy endpoint is being used (`/api/proxy/*`) — direct Ollama calls are not logged
 
 </details>
@@ -792,22 +797,23 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ```bash
 # Quick contributor setup
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin && npm install && npm run dev
 
 # Run full checks before submitting
 npm test && npx next lint && npm run build
 ```
 
-Good first issues are labelled [`good-first-issue`](https://github.com/ollama-admin/ollama-admin/issues?q=label%3Agood-first-issue) on GitHub.
+Good first issues are labelled [`good-first-issue`](https://github.com/joelmale/ollama-admin/issues?q=label%3Agood-first-issue) on GitHub.
 
 ---
 
 ## 🔒 Privacy
 
-- Set `LOG_STORE_PROMPTS=false` to log only metadata (tokens, latency, model) — prompt and response content is never written to the database
-- Logs are auto-purged after `LOG_RETENTION_DAYS` days
-- Catalog refresh is rate-limited to avoid hammering ollama.com
+- Request logs store metadata only (model, tokens, latency, status, API key, IP) — never prompt or response content
+- Chat conversations are stored in the database so they can be reopened; delete a chat to remove its messages
+- Request logs are purged after the retention period set in **Settings** (default `LOG_RETENTION_DAYS`)
+- The catalog is cached for 30 minutes to avoid hammering ollama.com
 - Do not expose Ollama Admin to the internet without enabling authentication
 
 ---

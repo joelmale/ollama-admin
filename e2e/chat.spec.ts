@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Chat Page", () => {
   test("shows empty state when no conversations", async ({ page }) => {
     await page.goto("/chat");
-    await expect(page.getByText(/No conversations|Sin conversaciones/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /No conversations|Sin conversaciones/ })).toBeVisible();
   });
 
   test("has server and model selectors", async ({ page }) => {
