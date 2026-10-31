@@ -111,3 +111,15 @@ describe("parseNumericSetting", () => {
     expect(parseNumericSetting(key, value)).toBe(expected);
   });
 });
+
+describe("log purge status", () => {
+  it("is shared through globalThis so separately bundled modules see it", async () => {
+    givenSettings({ logRetentionDays: "10" });
+    const { runPurge } = await import("@/lib/runtime-settings");
+
+    await runPurge();
+
+    const shared = (globalThis as { logPurgeStatus?: { lastRunAt: string | null } }).logPurgeStatus;
+    expect(shared?.lastRunAt).not.toBeNull();
+  });
+});

@@ -53,10 +53,13 @@ export async function applyRateLimitSettings(): Promise<void> {
   if (config) setRateLimitConfig(config);
 }
 
-const purgeStatus: { lastRunAt: string | null; lastError: string | null } = {
-  lastRunAt: null,
-  lastError: null,
+// instrumentation.ts and route handlers are bundled separately, so state the
+// health route reads must live on globalThis rather than in this module.
+const globalJobs = globalThis as unknown as {
+  backgroundJobsStarted?: boolean;
+  logPurgeStatus?: { lastRunAt: string | null; lastError: string | null };
 };
+const purgeStatus = (globalJobs.logPurgeStatus ??= { lastRunAt: null, lastError: null });
 
 export function getLogPurgeStatus() {
   return { ...purgeStatus };
@@ -73,8 +76,6 @@ export async function runPurge() {
     purgeStatus.lastRunAt = new Date().toISOString();
   }
 }
-
-const globalJobs = globalThis as unknown as { backgroundJobsStarted?: boolean };
 
 export function startBackgroundJobs() {
   if (globalJobs.backgroundJobsStarted) return;
