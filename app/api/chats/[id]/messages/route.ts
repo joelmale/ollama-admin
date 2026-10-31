@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import {
   buildOllamaUrl,
   formatOllamaConnectionError,
+  readOllamaError,
 } from "@/lib/ollama";
 import { logAsync } from "@/lib/log-async";
 
@@ -176,16 +177,6 @@ function createSSEStream(
       upstream.abort();
     },
   });
-}
-
-async function readOllamaError(res: Response): Promise<string> {
-  try {
-    const body = await res.json();
-    if (typeof body?.error === "string" && body.error.trim()) return body.error.trim();
-  } catch {
-    // not JSON
-  }
-  return `${res.status} ${res.statusText}`.trim();
 }
 
 export async function POST(

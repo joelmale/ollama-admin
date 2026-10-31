@@ -157,6 +157,16 @@ export function buildOllamaUrl(baseUrl: string, path: string): string {
   return `${normalizedBaseUrl}${normalizedPath}`;
 }
 
+export async function readOllamaError(res: Response): Promise<string> {
+  try {
+    const body = await res.json();
+    if (typeof body?.error === "string" && body.error.trim()) return body.error.trim();
+  } catch {
+    // not JSON
+  }
+  return `${res.status} ${res.statusText}`.trim();
+}
+
 export function isTimeoutError(error: unknown): boolean {
   return (error as { name?: unknown } | null)?.name === "TimeoutError";
 }

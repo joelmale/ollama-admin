@@ -27,7 +27,8 @@ Every fix gets a regression test.
 - Unit tests: 43 files, 360 tests; Playwright: 23 tests (run locally against the installed Chromium; CI installs its own). Server-side line coverage 49% → 86.6%; floors in `vitest.config.ts` ratchet up via `autoUpdate`.
 - Verified in a locally built image: container reports `healthy`, `/api/health` shows the version and `logPurge: ok`, and a database without migration history is copied to `/data/backups` before migrating.
 - Found while testing: ollama.com download counts were parsed as model sizes (fixed with the catalog work); the purge status was invisible to `/api/health` because `instrumentation.ts` is bundled separately (fixed).
-- Not changed: the compare route (`/api/chats/[id]/compare`) still has the pre-fix streaming behaviour of finding 6 (no partial save, no abort on disconnect). It is now covered by tests.
+- Follow-up: the compare route (`/api/chats/[id]/compare`) now gets the finding 6 treatment per side: partial replies saved, error lines detected, Ollama error bodies surfaced, upstream aborted on disconnect, save failures reported, 502/499 logged. The chat page toasts rejected compare requests and side errors (they used to vanish when the chat reloaded).
+- Unit tests after the follow-up: 43 files, 368 tests; coverage floor ratcheted to 87.15% lines.
 - Not changed: PostgreSQL still uses `db push` because the migrations are SQLite-only; the entrypoint now explains a failed sync.
 - Known: a legacy SQLite database with no migration history is re-synced with `db push` on every start, so it is also backed up on every start (newest 5 kept).
 - Found while wiring e2e: `requireAdmin()` ignored `AUTH_DISABLED`, so admin APIs returned 403 and the servers page crashed in that mode (fixed).

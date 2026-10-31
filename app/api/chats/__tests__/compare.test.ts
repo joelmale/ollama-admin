@@ -34,6 +34,30 @@ function ndjsonResponse(...lines: object[]) {
   );
 }
 
+function ndjson(...lines: object[]) {
+  return lines.map((l) => JSON.stringify(l)).join("\n") + "\n";
+}
+
+function streamResponse(chunks: string[], opts: { failAfter?: boolean } = {}) {
+  const queue = [...chunks];
+  return new Response(
+    new ReadableStream({
+      pull(controller) {
+        const next = queue.shift();
+        if (next !== undefined) controller.enqueue(encoder.encode(next));
+        else if (opts.failAfter) controller.error(new TypeError("terminated"));
+        else controller.close();
+      },
+    })
+  );
+}
+
+function assistantSaves(): Array<{ content: string }> {
+  return m.message.create.mock.calls
+    .map(([arg]) => arg.data)
+    .filter((d: { role: string }) => d.role === "assistant");
+}
+
 function post(body: object) {
   return POST(
     new Request("http://localhost/api/chats/chat_1/compare", {
@@ -58,6 +82,7 @@ const targets = [
 
 beforeEach(() => {
   vi.spyOn(console, "log").mockImplementation(() => undefined);
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
   (checkRateLimit as ReturnType<typeof vi.fn>).mockReturnValue({ allowed: true, remaining: 10, resetMs: 0 });
   m.chat.findUnique.mockResolvedValue({
     id: "chat_1",
@@ -136,8 +161,117 @@ describe("POST /api/chats/[id]/compare", () => {
 
     const evts = events(await (await post({ content: "q", targets })).text());
 
-    expect(evts).toContainEqual({ side: "1", error: "Error: Connection failed" });
+    expect(evts.find((e) => e.side === "1")?.error).toContain("Could not reach Ollama at http://two:11434");
     expect(evts.some((e) => e.side === "0" && e.done)).toBe(true);
+  });
+
+  it("surfaces Ollama's error body when a side is rejected", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (url: string) =>
+        url.includes("two")
+          ? new Response(JSON.stringify({ error: 'model "mistral" not found, try pulling it first' }), { status: 404 })
+          : ndjsonResponse({ message: { content: "ok" } }, { done: true })
+      )
+    );
+
+    const evts = events(await (await post({ content: "q", targets })).text());
+
+    expect(evts.find((e) => e.side === "1")?.error).toContain('model "mistral" not found');
+  });
+
+  it("keeps a partial side and reports an error line from Ollama", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (url: string) =>
+        url.includes("two")
+          ? streamResponse([ndjson({ message: { content: "partial" } }, { error: "model ran out of memory" })])
+          : ndjsonResponse({ message: { content: "ok" } }, { done: true })
+      )
+    );
+
+    const evts = events(await (await post({ content: "q", targets })).text());
+
+    expect(evts).toContainEqual({ side: "1", error: "model ran out of memory" });
+    expect(evts.some((e) => e.side === "1" && e.done)).toBe(false);
+    expect(assistantSaves().map((d) => d.content).sort()).toEqual(["ok", "partial"]);
+    expect(logAsync).toHaveBeenCalledWith(expect.objectContaining({ model: "mistral", statusCode: 502 }));
+    expect(evts.at(-1)).toEqual({ allDone: true });
+  });
+
+  it("keeps a partial side when Ollama drops the connection", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (url: string) =>
+        url.includes("two")
+          ? streamResponse([ndjson({ message: { content: "half" } })], { failAfter: true })
+          : ndjsonResponse({ message: { content: "ok" } }, { done: true })
+      )
+    );
+
+    const evts = events(await (await post({ content: "q", targets })).text());
+
+    expect(evts.some((e) => e.side === "1" && e.error)).toBe(true);
+    expect(assistantSaves().map((d) => d.content).sort()).toEqual(["half", "ok"]);
+    expect(evts.at(-1)).toEqual({ allDone: true });
+  });
+
+  it("does not save an empty side", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (url: string) =>
+        url.includes("two") ? streamResponse([ndjson({ error: "boom" })]) : ndjsonResponse({ message: { content: "ok" } }, { done: true })
+      )
+    );
+
+    await (await post({ content: "q", targets })).text();
+
+    expect(assistantSaves().map((d) => d.content)).toEqual(["ok"]);
+  });
+
+  it("reports a failure to save instead of hanging", async () => {
+    m.message.create.mockImplementation(async ({ data }: { data: { role: string } }) => {
+      if (data.role === "assistant") throw new Error("SQLITE_BUSY");
+      return {};
+    });
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => ndjsonResponse({ message: { content: "x" } }, { done: true })));
+
+    const evts = events(await (await post({ content: "q", targets })).text());
+
+    expect(evts.filter((e) => e.error).map((e) => e.error)).toEqual([
+      expect.stringContaining("could not be saved"),
+      expect.stringContaining("could not be saved"),
+    ]);
+    expect(evts.at(-1)).toEqual({ allDone: true });
+  });
+
+  it("aborts every upstream request and keeps partial sides when the client disconnects", async () => {
+    const signals: AbortSignal[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(async (_url: string, init: RequestInit) => {
+        signals.push(init.signal!);
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(encoder.encode(ndjson({ message: { content: "so far" } })));
+              init.signal!.addEventListener("abort", () => controller.error(new DOMException("aborted", "AbortError")));
+            },
+          })
+        );
+      })
+    );
+
+    const res = await post({ content: "q", targets });
+    const reader = res.body!.getReader();
+    await reader.read();
+    await reader.cancel();
+
+    await vi.waitFor(() => expect(assistantSaves()).toHaveLength(2));
+    expect(signals).toHaveLength(2);
+    expect(signals.every((s) => s.aborted)).toBe(true);
+    expect(assistantSaves().every((d) => d.content === "so far")).toBe(true);
+    expect(logAsync).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 499 }));
   });
 
   it.each([
