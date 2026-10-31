@@ -11,8 +11,8 @@ import { CatalogUnavailableError, getCatalog } from "@/lib/catalog";
 import { GET } from "@/app/api/catalog/route";
 
 const models = [
-  { id: "llama3.1", name: "llama3.1", description: "Meta model", capabilities: ["text", "tools"], sizes: ["8b"], pulls: "1M", updated: "1y" },
-  { id: "nomic", name: "nomic-embed", description: "Embeddings", capabilities: ["embedding"], sizes: ["137m"], pulls: "2M", updated: "1y" },
+  { id: "llama3.1", name: "llama3.1", description: "Meta model", capabilities: ["text", "tools"], sizes: ["8b"], pulls: "1M", pullCount: 1_000_000, updated: "1y", updatedAt: "2024-11-30T00:00:00.000Z" },
+  { id: "nomic", name: "nomic-embed", description: "Embeddings", capabilities: ["embedding"], sizes: ["137m"], pulls: "2M", pullCount: 2_000_000, updated: "1y", updatedAt: "2024-11-30T00:00:00.000Z" },
 ];
 
 beforeEach(() => {
@@ -27,6 +27,14 @@ describe("GET /api/catalog", () => {
     const res = await GET(new NextRequest("http://localhost/api/catalog?q=meta&c=tools"));
 
     expect((await res.json()).map((m: { id: string }) => m.id)).toEqual(["llama3.1"]);
+  });
+
+  it("matches the search term against model sizes", async () => {
+    (getCatalog as ReturnType<typeof vi.fn>).mockResolvedValue(models);
+
+    const res = await GET(new NextRequest("http://localhost/api/catalog?q=137m"));
+
+    expect((await res.json()).map((m: { id: string }) => m.id)).toEqual(["nomic"]);
   });
 
   it("returns the catalog error and status instead of an empty list", async () => {

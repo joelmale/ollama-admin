@@ -32,6 +32,15 @@ describe("parseModelsFromHtml", () => {
     expect(models[2].capabilities).toContain("cloud");
   });
 
+  it("exposes exact download counts and update dates for sorting", () => {
+    const [llama, vision] = parseModelsFromHtml(fixture);
+
+    expect(llama.pullCount).toBe(120_720_894);
+    expect(vision.pullCount).toBe(5_560_021);
+    expect(new Date(llama.updatedAt).getFullYear()).toBe(2024);
+    expect(new Date(llama.updatedAt).getTime()).toBeLessThan(new Date(vision.updatedAt).getTime());
+  });
+
   it("does not mistake the download count for a model size", () => {
     const [llama] = parseModelsFromHtml(fixture);
 

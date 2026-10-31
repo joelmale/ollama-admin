@@ -3,15 +3,24 @@
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Search, Check, Download, Loader2, CloudOff } from "lucide-react";
+import { Search, Check, Download, Loader2, CloudOff, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/toast";
 import { useServers } from "@/lib/hooks/use-servers";
 import { scoreModel, gradeColor, gradeBg, type Grade } from "@/lib/model-scoring";
-import { CapabilityIcons, CAP_ICONS, CAP_COLORS } from "@/components/ui/capability-icons";
+import {
+  assessVramFit,
+  estimateVramGB,
+  parseTagToSizeGB,
+  vramFitBg,
+  vramFitColor,
+  type VramFit,
+} from "@/lib/vram-estimate";
+import { CAP_ICONS, CAP_COLORS } from "@/components/ui/capability-icons";
 
 interface CatalogModel {
   id: string;
@@ -20,7 +29,9 @@ interface CatalogModel {
   capabilities: string[];
   sizes: string[];
   pulls: string;
+  pullCount: number;
   updated: string;
+  updatedAt: string;
 }
 
 interface GpuSpecs {
@@ -29,37 +40,46 @@ interface GpuSpecs {
   bandwidthGBs: number | null;
 }
 
+type SortKey = "popular" | "updated" | "name" | "size" | "grade";
+
 const CAPABILITY_OPTIONS = ["text", "tools", "vision", "embedding", "thinking"];
+const VRAM_PRESETS_GB = [4, 6, 8, 12, 16, 24, 32, 48, 80];
+const VRAM_STORAGE_KEY = "discover.vramGB";
+const VRAM_FITS: VramFit[] = ["comfortable", "tight", "exceeds"];
+const VRAM_FIT_GLYPH: Record<VramFit, string> = { comfortable: "✓", tight: "!", exceeds: "✕" };
 
 const GRADE_LABELS: Record<Grade, string> = {
   S: "≥50 t/s", A: "≥30 t/s", B: "≥15 t/s", C: "≥8 t/s", D: "≥3 t/s", F: "no fit",
 };
 
+const GRADE_ORDER: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4, F: 5 };
 
-// Estimate model size in GB from a tag like "7b", "13b", "70b" using Q4 approximation.
-function parseTagToSizeGB(tag: string): number | null {
-  // Normalize: MoE "8x7b" → "7b", e-series "e2b" → "2b"
-  const t = tag.toLowerCase().replace(/^\d+x/, "").replace(/^e(\d)/, "$1");
-  const bMatch = t.match(/^(\d+(?:\.\d+)?)b$/);
-  if (bMatch) return parseFloat(bMatch[1]) * 0.55;
-  const mMatch = t.match(/^(\d+(?:\.\d+)?)m$/);
-  if (mMatch) return (parseFloat(mMatch[1]) / 1000) * 0.55;
-  return null;
+function sortArrow(active: boolean, dir: 1 | -1) {
+  if (!active) return <span className="opacity-30">↕</span>;
+  return dir === 1 ? "↓" : "↑";
 }
 
-function parseRelativeTime(text: string): number {
-  const match = text.toLowerCase().match(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/);
-  if (!match) return 0;
-  const n = parseInt(match[1]);
-  const ms: Record<string, number> = { second: 1e3, minute: 6e4, hour: 3.6e6, day: 86.4e6, week: 6.048e8, month: 2.628e9, year: 3.154e10 };
-  return Date.now() - n * (ms[match[2]] ?? 0);
-}
-
-function vramStyle(memPct: number): React.CSSProperties {
-  if (memPct >= 100) return { color: "hsl(var(--muted-foreground))", background: "hsl(var(--muted))" };
-  if (memPct >= 80)  return { color: "hsl(0 84% 60%)",    background: "hsl(0 84% 60% / 0.15)" };
-  if (memPct >= 60)  return { color: "hsl(38 92% 50%)",   background: "hsl(38 92% 50% / 0.15)" };
-  return               { color: "hsl(142 71% 45%)",  background: "hsl(142 71% 45% / 0.15)" };
+function SortHeader({
+  label,
+  active,
+  dir,
+  onClick,
+  className,
+}: Readonly<{
+  label: string;
+  active: boolean;
+  dir: 1 | -1;
+  onClick: () => void;
+  className: string;
+}>) {
+  return (
+    <button
+      onClick={onClick}
+      className={`${className} items-center gap-0.5 transition-colors hover:text-[hsl(var(--foreground))] ${active ? "text-[hsl(var(--foreground))]" : ""}`}
+    >
+      {label} <span>{sortArrow(active, dir)}</span>
+    </button>
+  );
 }
 
 export default function DiscoverPage() {
@@ -77,10 +97,29 @@ export default function DiscoverPage() {
   const [downloadedModels, setDownloadedModels] = useState<Set<string>>(new Set());
   const [downloadingRefs, setDownloadingRefs] = useState<Set<string>>(new Set());
   const [gpuSpecs, setGpuSpecs] = useState<GpuSpecs | null>(null);
+  const [manualVram, setManualVram] = useState("");
   const [fitsGpuOnly, setFitsGpuOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<"updated" | "grade">("updated");
+  const [sortBy, setSortBy] = useState<SortKey>("popular");
   const [sortDir, setSortDir] = useState<1 | -1>(1);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    try {
+      setManualVram(localStorage.getItem(VRAM_STORAGE_KEY) ?? "");
+    } catch {
+      // storage unavailable (private mode); the value just won't persist
+    }
+  }, []);
+
+  const updateManualVram = (value: string) => {
+    setManualVram(value);
+    try {
+      if (value) localStorage.setItem(VRAM_STORAGE_KEY, value);
+      else localStorage.removeItem(VRAM_STORAGE_KEY);
+    } catch {
+      // storage unavailable; keep the in-memory value
+    }
+  };
 
   useEffect(() => {
     if (!selectedServer) return;
@@ -223,6 +262,12 @@ export default function DiscoverPage() {
   const isDownloading = (modelName: string, tag: string) =>
     downloadingRefs.has(`${modelName}:${tag}`);
 
+  const manualVramGB = useMemo(() => {
+    const parsed = Number.parseFloat(manualVram);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [manualVram]);
+  const vramGB = manualVramGB ?? gpuSpecs?.vramGB ?? null;
+
   const getTagScore = (tag: string) => {
     if (!gpuSpecs) return null;
     const sizeGB = parseTagToSizeGB(tag);
@@ -230,36 +275,50 @@ export default function DiscoverPage() {
     return scoreModel(sizeGB, gpuSpecs.vramGB, gpuSpecs.bandwidthGBs ?? undefined);
   };
 
-  // Flatten models × sizes into individual rows; apply GPU filter and sort by grade.
-  const flatRows = useMemo(() => {
-    const GRADE_ORDER: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4, F: 5 };
+  const getVramFit = (sizeGB: number | null) =>
+    vramGB !== null && sizeGB !== null ? assessVramFit(estimateVramGB(sizeGB), vramGB) : null;
 
+  // Flatten models × sizes into individual rows; apply the VRAM filter and sort.
+  const flatRows = useMemo(() => {
     const rows = models.flatMap((model) => {
       const sizes = model.sizes.length > 0 ? model.sizes : ["latest"];
-      const all = sizes.map((size) => ({ ...model, size }));
-      if (fitsGpuOnly && gpuSpecs) {
-        return all.filter(({ size }) => {
-          const sizeGB = parseTagToSizeGB(size);
-          return sizeGB === null || sizeGB <= gpuSpecs.vramGB;
-        });
+      const all = sizes.map((size) => ({ ...model, size, sizeGB: parseTagToSizeGB(size) }));
+      if (fitsGpuOnly && vramGB !== null) {
+        return all.filter(({ sizeGB }) => getVramFit(sizeGB)?.fit !== "exceeds");
       }
       return all;
     });
 
-    return [...rows].sort((a, b) => {
-      if (sortBy === "grade" && gpuSpecs) {
+    type Row = (typeof rows)[number];
+    const compare: Record<SortKey, (a: Row, b: Row) => number> = {
+      popular: (a, b) => b.pullCount - a.pullCount,
+      updated: (a, b) => (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0),
+      name: (a, b) => a.name.localeCompare(b.name),
+      size: (a, b) => (a.sizeGB ?? Number.MAX_SAFE_INTEGER) - (b.sizeGB ?? Number.MAX_SAFE_INTEGER),
+      grade: (a, b) => {
         const scoreA = getTagScore(a.size);
         const scoreB = getTagScore(b.size);
         const gradeA = scoreA ? GRADE_ORDER[scoreA.grade] ?? 6 : 6;
         const gradeB = scoreB ? GRADE_ORDER[scoreB.grade] ?? 6 : 6;
-        if (gradeA !== gradeB) return (gradeA - gradeB) * sortDir;
-        return ((scoreB?.tps ?? 0) - (scoreA?.tps ?? 0)) * sortDir;
-      }
-      // Default: sort by updated (most recent first)
-      return (parseRelativeTime(b.updated) - parseRelativeTime(a.updated)) * sortDir;
-    });
+        if (gradeA !== gradeB) return gradeA - gradeB;
+        return (scoreB?.tps ?? 0) - (scoreA?.tps ?? 0);
+      },
+    };
+    const effectiveSort: SortKey = sortBy === "grade" && !gpuSpecs ? "popular" : sortBy;
+
+    return [...rows].sort(
+      (a, b) =>
+        compare[effectiveSort](a, b) * sortDir ||
+        a.name.localeCompare(b.name) ||
+        (a.sizeGB ?? 0) - (b.sizeGB ?? 0)
+    );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [models, fitsGpuOnly, gpuSpecs, sortBy, sortDir]);
+  }, [models, fitsGpuOnly, vramGB, gpuSpecs, sortBy, sortDir]);
+
+  const selectSort = (key: SortKey) => {
+    setSortDir(sortBy === key && sortDir === 1 ? -1 : 1);
+    setSortBy(key);
+  };
 
   const gpuLabel = gpuSpecs
     ? `${gpuSpecs.gpuName.replace(/NVIDIA GeForce /i, "").replace(/NVIDIA /i, "")} · ${Math.round(gpuSpecs.vramGB)}GB`
@@ -282,9 +341,31 @@ export default function DiscoverPage() {
         )}
       </div>
 
-      {/* Search + Server */}
+      {/* Search + Sort + Server */}
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchModels")} className="flex-1" />
+        <div className="flex items-center gap-1.5">
+          <Select
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value as SortKey); setSortDir(1); }}
+            aria-label={t("sortBy")}
+            className="w-auto"
+          >
+            <option value="popular">{t("sort.popular")}</option>
+            <option value="updated">{t("sort.updated")}</option>
+            <option value="name">{t("sort.name")}</option>
+            <option value="size">{t("sort.size")}</option>
+            {gpuSpecs && <option value="grade">{t("sort.grade")}</option>}
+          </Select>
+          <button
+            onClick={() => setSortDir((d) => (d === 1 ? -1 : 1))}
+            aria-label={t("reverseSort")}
+            title={t("reverseSort")}
+            className="rounded-md border border-[hsl(var(--border))] p-2 text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]"
+          >
+            <ArrowUpDown className="h-4 w-4" />
+          </button>
+        </div>
         {servers.length > 1 && (
           <Select value={selectedServer} onChange={(e) => setSelectedServer(e.target.value)} className="w-auto">
             {servers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -308,7 +389,7 @@ export default function DiscoverPage() {
             {t(`capabilities.${cap}`)}
           </button>
         ))}
-        {gpuSpecs && (
+        {vramGB !== null && (
           <button
             onClick={() => setFitsGpuOnly((v) => !v)}
             aria-pressed={fitsGpuOnly}
@@ -320,6 +401,53 @@ export default function DiscoverPage() {
           >
             {t("fitsGpu")}
           </button>
+        )}
+      </div>
+
+      {/* VRAM */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.4)] px-3 py-2 text-xs text-[hsl(var(--muted-foreground))]">
+        <label htmlFor="discover-vram" className="font-semibold text-[hsl(var(--foreground))]">
+          {t("vramLabel")}
+        </label>
+        <div className="w-24">
+          <Input
+            id="discover-vram"
+            type="number"
+            min={1}
+            max={1024}
+            step={1}
+            list="discover-vram-presets"
+            value={manualVram}
+            onChange={(e) => updateManualVram(e.target.value)}
+            placeholder={gpuSpecs ? String(Math.round(gpuSpecs.vramGB)) : "24"}
+          />
+        </div>
+        <datalist id="discover-vram-presets">
+          {VRAM_PRESETS_GB.map((gb) => <option key={gb} value={gb} />)}
+        </datalist>
+        {gpuLabel && <span>{t("vramDetected", { gpu: gpuLabel })}</span>}
+        {manualVram && gpuSpecs && (
+          <button
+            onClick={() => updateManualVram("")}
+            className="underline underline-offset-2 hover:text-[hsl(var(--foreground))]"
+          >
+            {t("vramUseDetected")}
+          </button>
+        )}
+        {vramGB === null && <span>{t("vramHint")}</span>}
+        {vramGB !== null && (
+          <span className="flex flex-wrap items-center gap-1.5" title={t("vramLegend")}>
+            {VRAM_FITS.map((fit) => (
+              <span
+                key={fit}
+                className="rounded px-1.5 py-0.5 text-[10px] font-bold"
+                style={{ color: vramFitColor(fit), background: vramFitBg(fit) }}
+              >
+                <span aria-hidden>{VRAM_FIT_GLYPH[fit]} </span>
+                {t(`vramFit.${fit}`)}
+              </span>
+            ))}
+          </span>
         )}
       </div>
 
@@ -372,25 +500,47 @@ export default function DiscoverPage() {
         <EmptyState icon={Search} title={t("emptyTitle")} description={t("emptyDescription")} />
       )}
       {listState === "ready" && (
-        <div className="mt-4 overflow-hidden rounded-lg border border-[hsl(var(--border))]">
+        <div className="mt-4 rounded-lg border border-[hsl(var(--border))]">
           {/* Column headers */}
-          <div className="flex items-center gap-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.6)] px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
-            <span className="flex-1">Model</span>
-            <button
-              onClick={() => { setSortBy("updated"); setSortDir(sortBy === "updated" ? (sortDir === 1 ? -1 : 1) : 1); }}
-              className={`w-24 shrink-0 hidden sm:flex items-center justify-end gap-0.5 hover:text-[hsl(var(--foreground))] transition-colors ${sortBy === "updated" ? "text-[hsl(var(--foreground))]" : ""}`}
-            >
-              Updated <span>{sortBy === "updated" ? (sortDir === 1 ? "↓" : "↑") : <span className="opacity-30">↕</span>}</span>
-            </button>
-            <span className="w-28 shrink-0 text-right">Size</span>
-            {gpuSpecs && <span className="w-24 shrink-0 text-right hidden md:block">Speed</span>}
+          <div className="flex items-center gap-4 rounded-t-lg border-b border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.6)] px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+            <SortHeader
+              label={t("columns.model")}
+              active={sortBy === "name"}
+              dir={sortDir}
+              onClick={() => selectSort("name")}
+              className="flex flex-1 justify-start uppercase"
+            />
+            <SortHeader
+              label={t("columns.pulls")}
+              active={sortBy === "popular"}
+              dir={sortDir}
+              onClick={() => selectSort("popular")}
+              className="hidden w-20 shrink-0 justify-end md:flex"
+            />
+            <SortHeader
+              label={t("columns.updated")}
+              active={sortBy === "updated"}
+              dir={sortDir}
+              onClick={() => selectSort("updated")}
+              className="hidden w-24 shrink-0 justify-end sm:flex"
+            />
+            <SortHeader
+              label={t("columns.size")}
+              active={sortBy === "size"}
+              dir={sortDir}
+              onClick={() => selectSort("size")}
+              className="flex w-20 shrink-0 justify-end"
+            />
+            {vramGB !== null && <span className="w-28 shrink-0 text-right">{t("columns.vram")}</span>}
+            {gpuSpecs && <span className="w-24 shrink-0 text-right hidden md:block">{t("columns.speed")}</span>}
             {gpuSpecs && (
-              <button
-                onClick={() => { setSortBy("grade"); setSortDir(sortBy === "grade" ? (sortDir === 1 ? -1 : 1) : 1); }}
-                className={`w-16 shrink-0 text-center whitespace-nowrap hover:text-[hsl(var(--foreground))] transition-colors ${sortBy === "grade" ? "text-[hsl(var(--foreground))]" : ""}`}
-              >
-                Grade <span>{sortBy === "grade" ? (sortDir === 1 ? "↓" : "↑") : <span className="opacity-30">↕</span>}</span>
-              </button>
+              <SortHeader
+                label={t("columns.grade")}
+                active={sortBy === "grade"}
+                dir={sortDir}
+                onClick={() => selectSort("grade")}
+                className="flex w-16 shrink-0 justify-center whitespace-nowrap"
+              />
             )}
             <span className="w-8 shrink-0" />
           </div>
@@ -399,27 +549,42 @@ export default function DiscoverPage() {
             const downloaded = isModelTagDownloaded(row.name, row.size);
             const pulling = isDownloading(row.name, row.size);
             const score = getTagScore(row.size);
-            const sizeGB = parseTagToSizeGB(row.size);
-            const gbLabel = sizeGB != null
-              ? sizeGB < 10 ? `${sizeGB.toFixed(1)} GB` : `${Math.round(sizeGB)} GB`
-              : null;
-            const noFit = score && !score.fits;
+            const fit = getVramFit(row.sizeGB);
+            const gbDigits = row.sizeGB != null && row.sizeGB < 10 ? 1 : 0;
+            const gbLabel = row.sizeGB == null ? null : `${row.sizeGB.toFixed(gbDigits)} GB`;
             const isLast = idx === flatRows.length - 1;
+
+            const nameBlock = (
+              <div
+                tabIndex={row.description ? 0 : undefined}
+                className={`min-w-0 flex items-center gap-2 flex-wrap rounded ${fit?.fit === "exceeds" ? "opacity-60" : ""}`}
+              >
+                <span className="font-semibold truncate">{row.name}</span>
+                <span className="shrink-0 rounded bg-[hsl(var(--muted))] px-1.5 py-0.5 font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+                  {row.size}
+                </span>
+              </div>
+            );
 
             const rowInner = (
               <div className={[
                 "flex items-center gap-4 px-4 py-3 text-sm",
-                noFit ? "opacity-40" : "",
                 !isLast ? "border-b border-[hsl(var(--border))]" : "",
               ].join(" ")}>
                 {/* Name + size tag + capability icons */}
                 <div className="min-w-0 flex-1 flex items-center gap-3">
-                  <div className="min-w-0 flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold truncate">{row.name}</span>
-                    <span className="shrink-0 rounded bg-[hsl(var(--muted))] px-1.5 py-0.5 font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
-                      {row.size}
-                    </span>
-                  </div>
+                  {row.description ? (
+                    <Tooltip
+                      content={row.description}
+                      side="bottom"
+                      wrapperClassName="min-w-0"
+                      className="left-0 w-80 max-w-[80vw] translate-x-0 whitespace-normal text-left"
+                    >
+                      {nameBlock}
+                    </Tooltip>
+                  ) : (
+                    nameBlock
+                  )}
                   <div className="flex shrink-0 items-center gap-1">
                     {row.capabilities.map((cap) => (
                       <span key={cap} title={cap} style={{ color: CAP_COLORS[cap] ?? "hsl(var(--muted-foreground))" }}>
@@ -429,20 +594,39 @@ export default function DiscoverPage() {
                   </div>
                 </div>
 
+                {/* Pulls */}
+                <span className="w-20 shrink-0 text-right text-xs tabular-nums text-[hsl(var(--muted-foreground))] hidden md:block">
+                  {row.pulls}
+                </span>
+
                 {/* Updated */}
                 <span className="w-24 shrink-0 text-right text-xs text-[hsl(var(--muted-foreground))] hidden sm:block">
                   {row.updated}
                 </span>
 
-                {/* GB + VRAM% */}
-                <div className="w-28 shrink-0 flex items-center justify-end gap-1.5">
+                {/* Download size */}
+                <div className="w-20 shrink-0 text-right">
                   {gbLabel && <span className="tabular-nums">{gbLabel}</span>}
-                  {score && gpuSpecs && (
-                    <span className="rounded px-1.5 py-0.5 text-[11px] font-bold tabular-nums" style={vramStyle(score.memPct)}>
-                      {Math.round(score.memPct)}%
-                    </span>
-                  )}
                 </div>
+
+                {/* Estimated VRAM and fit */}
+                {vramGB !== null && (
+                  <div className="w-28 shrink-0 flex justify-end">
+                    {fit ? (
+                      <span
+                        title={t("vramEstimate", { gb: fit.neededGB.toFixed(1), pct: Math.round(fit.pct) })}
+                        className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-bold tabular-nums"
+                        style={{ color: vramFitColor(fit.fit), background: vramFitBg(fit.fit) }}
+                      >
+                        <span aria-hidden>{VRAM_FIT_GLYPH[fit.fit]}</span>
+                        ~{fit.neededGB.toFixed(1)} GB
+                        <span className="sr-only">{t(`vramFit.${fit.fit}`)}</span>
+                      </span>
+                    ) : (
+                      <span className="text-[hsl(var(--muted-foreground))]">—</span>
+                    )}
+                  </div>
+                )}
 
                 {/* Speed */}
                 {gpuSpecs && (
@@ -470,11 +654,11 @@ export default function DiscoverPage() {
 
                 {/* Action */}
                 <div className="w-8 shrink-0 flex justify-end">
-                  {downloaded ? (
-                    <Check className="h-4 w-4 text-[hsl(142_71%_45%)]" />
-                  ) : pulling ? (
+                  {downloaded && <Check className="h-4 w-4 text-[hsl(142_71%_45%)]" />}
+                  {!downloaded && pulling && (
                     <Loader2 className="h-4 w-4 animate-spin text-[hsl(var(--muted-foreground))]" />
-                  ) : isAdmin ? (
+                  )}
+                  {!downloaded && !pulling && isAdmin && (
                     <button
                       onClick={() => handlePull(row.name, row.size !== "latest" ? row.size : undefined)}
                       disabled={!selectedServer}
@@ -483,7 +667,7 @@ export default function DiscoverPage() {
                     >
                       <Download className="h-4 w-4" />
                     </button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             );
