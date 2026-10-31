@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { assessVramFit, estimateVramGB, parseTagToSizeGB } from "@/lib/vram-estimate";
+import {
+  assessVramFit,
+  estimateVramGB,
+  parseTagToSizeGB,
+  vramFitBg,
+  vramFitColor,
+  type VramFit,
+} from "@/lib/vram-estimate";
 
 describe("parseTagToSizeGB", () => {
   it("estimates Q4 weights from billions of parameters", () => {
@@ -48,5 +55,21 @@ describe("assessVramFit", () => {
 
   it("never fits when no VRAM is available", () => {
     expect(assessVramFit(1, 0).fit).toBe("exceeds");
+  });
+});
+
+describe("vramFitColor and vramFitBg", () => {
+  const fits: VramFit[] = ["comfortable", "tight", "exceeds"];
+
+  it("maps comfortable, tight and exceeds to green, amber and red", () => {
+    expect(vramFitColor("comfortable")).toContain("142");
+    expect(vramFitColor("tight")).toContain("38");
+    expect(vramFitColor("exceeds")).toContain("0 84%");
+  });
+
+  it("uses a translucent background in the same hue as the text color", () => {
+    for (const fit of fits) {
+      expect(vramFitBg(fit)).toBe(vramFitColor(fit).replace(")", " / 0.15)"));
+    }
   });
 });
