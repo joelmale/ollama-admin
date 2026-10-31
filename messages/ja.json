@@ -140,7 +140,8 @@
       "deleteError": "プリセットの削除エラー",
       "deletePreset": "プリセット{name}を削除",
       "namePlaceholder": "プリセット名..."
-    }
+    },
+    "streamError": "応答に失敗しました: {error}"
   },
   "compare": {
     "title": "モデル比較",

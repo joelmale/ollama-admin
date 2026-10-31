@@ -140,7 +140,8 @@
       "deleteError": "删除预设出错",
       "deletePreset": "删除预设 {name}",
       "namePlaceholder": "预设名称..."
-    }
+    },
+    "streamError": "回复失败：{error}"
   },
   "compare": {
     "title": "模型对比",

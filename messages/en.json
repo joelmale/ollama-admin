@@ -140,7 +140,8 @@
       "deleteError": "Error deleting preset",
       "deletePreset": "Delete preset {name}",
       "namePlaceholder": "Preset name..."
-    }
+    },
+    "streamError": "The reply failed: {error}"
   },
   "compare": {
     "title": "Compare Models",

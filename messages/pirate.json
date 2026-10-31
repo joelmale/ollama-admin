@@ -140,7 +140,8 @@
       "deleteError": "Couldn't get rid of it!",
       "deletePreset": "Ditch preset {name}, arr",
       "namePlaceholder": "Name yer preset..."
-    }
+    },
+    "streamError": "The reply sank: {error}"
   },
   "compare": {
     "title": "Ship Battle!",

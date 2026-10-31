@@ -140,7 +140,8 @@
       "deleteError": "Erreur lors de la suppression du preset",
       "deletePreset": "Supprimer le preset {name}",
       "namePlaceholder": "Nom du preset..."
-    }
+    },
+    "streamError": "La réponse a échoué : {error}"
   },
   "compare": {
     "title": "Comparer les modèles",

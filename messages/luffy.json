@@ -140,7 +140,8 @@
       "deleteError": "Couldn't get rid of it!",
       "deletePreset": "Ditch preset {name}",
       "namePlaceholder": "Name it..."
-    }
+    },
+    "streamError": "The reply failed: {error}"
   },
   "compare": {
     "title": "Model Battle! Shishishi!",

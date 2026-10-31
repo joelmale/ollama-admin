@@ -49,63 +49,99 @@ function buildOllamaRequest(
   };
 }
 
+const CLIENT_CLOSED_REQUEST = 499;
+
 function createSSEStream(
   ollamaRes: Response,
-  chat: { id: string; title: string; server: { id: string }; model: string },
+  upstream: AbortController,
+  chat: { id: string; title: string; server: { id: string; url: string }; model: string },
   startTime: number,
   content: string
 ) {
   const reader = ollamaRes.body!.getReader();
   const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
 
   let fullContent = "";
   let promptTokens = 0;
   let completionTokens = 0;
+  let streamError: string | null = null;
+  let clientGone = false;
+
+  const send = (controller: ReadableStreamDefaultController, text: string) => {
+    if (clientGone) return;
+    try {
+      controller.enqueue(encoder.encode(text));
+    } catch {
+      clientGone = true;
+    }
+  };
+
+  const handleLine = (controller: ReadableStreamDefaultController, line: string) => {
+    if (!line.trim()) return;
+    let json;
+    try {
+      json = JSON.parse(line);
+    } catch {
+      return;
+    }
+    if (json.error) {
+      streamError = String(json.error);
+      return;
+    }
+    if (json.message?.content) fullContent += json.message.content;
+    if (json.done) {
+      promptTokens = json.prompt_eval_count || 0;
+      completionTokens = json.eval_count || 0;
+    }
+    send(controller, `data: ${line}\n\n`);
+  };
 
   return new ReadableStream({
     async start(controller) {
       let buffer = "";
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const json = JSON.parse(line);
-            if (json.message?.content) {
-              fullContent += json.message.content;
-            }
-            if (json.done) {
-              promptTokens = json.prompt_eval_count || 0;
-              completionTokens = json.eval_count || 0;
-            }
-            controller.enqueue(
-              new TextEncoder().encode(`data: ${line}\n\n`)
-            );
-          } catch {
-            // skip
-          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) handleLine(controller, line);
         }
+        handleLine(controller, buffer);
+      } catch (err) {
+        if (!clientGone) streamError = formatOllamaConnectionError(chat.server.url, err);
       }
 
       const latencyMs = Date.now() - startTime;
+      const statusCode = streamError ? 502 : clientGone ? CLIENT_CLOSED_REQUEST : 200;
 
-      await prisma.message.create({
-        data: {
-          chatId: chat.id,
-          role: "assistant",
-          content: fullContent,
-          promptTokens,
-          completionTokens,
-          latencyMs,
-        },
-      });
+      try {
+        if (fullContent) {
+          await prisma.message.create({
+            data: {
+              chatId: chat.id,
+              role: "assistant",
+              content: fullContent,
+              promptTokens,
+              completionTokens,
+              latencyMs,
+            },
+          });
+        }
+
+        if (chat.title === "New Conversation" && content) {
+          await prisma.chat.update({
+            where: { id: chat.id },
+            data: { title: content.slice(0, 50) },
+          });
+        }
+      } catch (err) {
+        logger.error("Failed to save chat reply", { chatId: chat.id, error: String(err) });
+        streamError ??= "The reply could not be saved. Check the server logs and database.";
+      }
 
       logAsync({
         serverId: chat.server.id,
@@ -114,26 +150,42 @@ function createSSEStream(
         promptTokens,
         completionTokens,
         latencyMs,
-        statusCode: 200,
+        statusCode,
       });
 
-      logger.info("Chat completed", { chatId: chat.id, model: chat.model, promptTokens, completionTokens, latencyMs });
-
-      if (chat.title === "New Conversation" && content) {
-        await prisma.chat.update({
-          where: { id: chat.id },
-          data: { title: content.slice(0, 50) },
-        });
+      if (streamError) {
+        logger.error("Chat stream failed", { chatId: chat.id, model: chat.model, error: streamError, savedChars: fullContent.length });
+        send(controller, `data: ${JSON.stringify({ error: streamError })}\n\n`);
+      } else if (clientGone) {
+        logger.info("Chat client disconnected", { chatId: chat.id, model: chat.model, savedChars: fullContent.length });
+      } else {
+        logger.info("Chat completed", { chatId: chat.id, model: chat.model, promptTokens, completionTokens, latencyMs });
+        send(controller, `data: ${JSON.stringify({ done: true, promptTokens, completionTokens, latencyMs })}\n\n`);
       }
 
-      controller.enqueue(
-        new TextEncoder().encode(
-          `data: ${JSON.stringify({ done: true, promptTokens, completionTokens, latencyMs })}\n\n`
-        )
-      );
-      controller.close();
+      if (!clientGone) {
+        try {
+          controller.close();
+        } catch {
+          // already closed by the client
+        }
+      }
+    },
+    cancel() {
+      clientGone = true;
+      upstream.abort();
     },
   });
+}
+
+async function readOllamaError(res: Response): Promise<string> {
+  try {
+    const body = await res.json();
+    if (typeof body?.error === "string" && body.error.trim()) return body.error.trim();
+  } catch {
+    // not JSON
+  }
+  return `${res.status} ${res.statusText}`.trim();
 }
 
 export async function POST(
@@ -177,15 +229,21 @@ export async function POST(
   let userContent = content;
 
   if (regenerate) {
-    const lastAssistant = [...chat.messages]
-      .reverse()
-      .find((m) => m.role === "assistant");
-    if (lastAssistant) {
-      await prisma.message.delete({ where: { id: lastAssistant.id } });
-      finalMessages = chat.messages.filter((m) => m.id !== lastAssistant.id);
+    // Only the final reply is replaced; after a failed reply the chat ends on a
+    // user message and every earlier answer must survive.
+    const last = chat.messages[chat.messages.length - 1];
+    if (last?.role === "assistant") {
+      await prisma.message.delete({ where: { id: last.id } });
+      finalMessages = chat.messages.slice(0, -1);
     }
     const lastUser = [...finalMessages].reverse().find((m) => m.role === "user");
-    userContent = lastUser?.content || "";
+    if (!lastUser) {
+      return new Response(
+        JSON.stringify({ error: "There is no message to regenerate a reply for. Send a message first." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    userContent = lastUser.content;
   } else if (editMessageId) {
     const editIndex = chat.messages.findIndex((m) => m.id === editMessageId);
     if (editIndex >= 0) {
@@ -235,6 +293,9 @@ export async function POST(
   const startTime = Date.now();
   logger.info("Chat request", { chatId: chat.id, model: chat.model, server: chat.server.name });
 
+  const upstream = new AbortController();
+  req.signal?.addEventListener("abort", () => upstream.abort());
+
   let ollamaRes: Response;
   try {
     const { url, body } = buildOllamaRequest(chat, ollamaMessages);
@@ -242,6 +303,7 @@ export async function POST(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: upstream.signal,
     });
   } catch (error) {
     const message = formatOllamaConnectionError(chat.server.url, error);
@@ -256,14 +318,15 @@ export async function POST(
   }
 
   if (!ollamaRes.ok || !ollamaRes.body) {
-    logger.error("Ollama chat error", { chatId: chat.id, status: ollamaRes.status });
+    const detail = await readOllamaError(ollamaRes);
+    logger.error("Ollama chat error", { chatId: chat.id, status: ollamaRes.status, error: detail });
     return new Response(
-      JSON.stringify({ error: `Ollama error: ${ollamaRes.statusText}` }),
+      JSON.stringify({ error: `Ollama error: ${detail}` }),
       { status: 502, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  const stream = createSSEStream(ollamaRes, chat, startTime, userContent);
+  const stream = createSSEStream(ollamaRes, upstream, chat, startTime, userContent);
 
   return new Response(stream, {
     headers: {

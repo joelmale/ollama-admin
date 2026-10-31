@@ -303,11 +303,17 @@ export default function ChatPage() {
         signal: abortRef.current.signal,
       });
 
-      if (!res.body) return;
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => null);
+        toast(t("streamError", { error: data?.error ?? res.statusText }), "error");
+        fetchChats();
+        return;
+      }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
       let fullContent = "";
+      let streamError: string | null = null;
       let meta = { promptTokens: 0, completionTokens: 0, latencyMs: 0 };
 
       while (true) {
@@ -320,6 +326,7 @@ export default function ChatPage() {
           if (!line.startsWith("data: ")) continue;
           try {
             const json = JSON.parse(line.slice(6));
+            if (json.error) streamError = json.error;
             if (json.message?.content) {
               fullContent += json.message.content;
               setStreamingContent(fullContent);
@@ -335,7 +342,10 @@ export default function ChatPage() {
         }
       }
 
-      setMessages((prev) => [...prev, { id: `assistant-${Date.now()}`, role: "assistant", content: fullContent, ...meta }]);
+      if (fullContent) {
+        setMessages((prev) => [...prev, { id: `assistant-${Date.now()}`, role: "assistant", content: fullContent, ...meta }]);
+      }
+      if (streamError) toast(t("streamError", { error: streamError }), "error");
       setStreamingContent("");
       fetchChats();
     } catch (err) {

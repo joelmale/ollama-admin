@@ -140,7 +140,8 @@
       "deleteError": "प्रीसेट हटाने में त्रुटि",
       "deletePreset": "प्रीसेट {name} हटाएं",
       "namePlaceholder": "प्रीसेट नाम..."
-    }
+    },
+    "streamError": "उत्तर विफल रहा: {error}"
   },
   "compare": {
     "title": "मॉडल तुलना",
