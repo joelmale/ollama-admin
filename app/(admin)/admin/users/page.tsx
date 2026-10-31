@@ -200,6 +200,9 @@ export default function UsersPage() {
     });
     if (res.ok) {
       fetchUsers();
+    } else {
+      const data = await res.json().catch(() => null);
+      toast(data?.error ?? res.statusText, "error");
     }
   };
 

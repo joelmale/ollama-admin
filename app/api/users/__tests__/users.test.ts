@@ -21,6 +21,10 @@ vi.mock("@/lib/require-admin", () => ({
   requireAdmin: vi.fn(),
 }));
 
+vi.mock("@/lib/user-access", () => ({
+  invalidateUserAccess: vi.fn(),
+}));
+
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 
@@ -155,6 +159,7 @@ describe("POST /api/users", () => {
 describe("PUT /api/users/[id]", () => {
   it("updates user when admin", async () => {
     (requireAdmin as ReturnType<typeof vi.fn>).mockResolvedValue(adminSession);
+    (prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(mockUser);
     (prisma.user.update as ReturnType<typeof vi.fn>).mockResolvedValue({
       ...mockUser,
       role: "admin",
@@ -229,8 +234,9 @@ describe("DELETE /api/users/[id]", () => {
     (prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: "u2",
       role: "admin",
+      active: true,
     });
-    (prisma.user.count as ReturnType<typeof vi.fn>).mockResolvedValue(1);
+    (prisma.user.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
 
     const { DELETE } = await import("@/app/api/users/[id]/route");
     const req = new Request("http://localhost/api/users/u2", { method: "DELETE" });
