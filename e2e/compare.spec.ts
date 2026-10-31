@@ -19,7 +19,8 @@ test.describe("Compare Mode (integrated in Chat)", () => {
 
   test("can toggle compare mode off", async ({ page }) => {
     await page.goto("/chat");
-    const compareBtn = page.getByRole("button", { name: /Compare|Comparar|Comparer/ });
+    // In compare mode the send button is also labelled "Compare"; the toggle is the one with visible text.
+    const compareBtn = page.getByText(/^(Compare|Comparar|Comparer)$/);
     await compareBtn.click();
 
     await expect(page.getByText(/Add model|Añadir modelo/)).toBeVisible();
