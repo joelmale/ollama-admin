@@ -99,12 +99,17 @@ export default function ServersPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/servers?all=true");
-      const data = await res.json();
-      setServers(data);
+      const data = await res.json().catch(() => null);
+      if (res.ok && Array.isArray(data)) {
+        setServers(data);
+      } else {
+        setServers([]);
+        toast(data?.error ?? res.statusText, "error");
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   const checkHealth = useCallback(async (server: Server) => {
     try {
