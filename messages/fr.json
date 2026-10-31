@@ -235,10 +235,13 @@
       "active": "Actif",
       "online": "En ligne",
       "offline": "Hors ligne",
-      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce serveur ?",
+      "deleteConfirm": "Les conversations et les journaux de requêtes du serveur seront aussi supprimés. Pour les conserver, désactivez plutôt le serveur.",
       "emptyTitle": "Aucun serveur configuré",
       "emptyDescription": "Ajoutez votre premier serveur Ollama pour commencer.",
-      "emptyAction": "Ajouter un serveur"
+      "emptyAction": "Ajouter un serveur",
+      "deleteTitle": "Supprimer le serveur",
+      "deleteSuccess": "Serveur supprimé",
+      "deleteError": "Impossible de supprimer le serveur. Consultez les journaux du serveur."
     },
     "logs": {
       "title": "Journaux",

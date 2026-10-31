@@ -233,10 +233,13 @@
       "active": "Activo",
       "online": "En línea",
       "offline": "Sin conexión",
-      "deleteConfirm": "¿Estás seguro de que quieres eliminar este servidor?",
+      "deleteConfirm": "También se eliminarán los chats y los registros de solicitudes del servidor. Para conservarlos, desactiva el servidor.",
       "emptyTitle": "No hay servidores configurados",
       "emptyDescription": "Añade tu primer servidor Ollama para comenzar.",
-      "emptyAction": "Añadir servidor"
+      "emptyAction": "Añadir servidor",
+      "deleteTitle": "Eliminar servidor",
+      "deleteSuccess": "Servidor eliminado",
+      "deleteError": "No se pudo eliminar el servidor. Revisa los registros del servidor."
     },
     "logs": {
       "title": "Registros",

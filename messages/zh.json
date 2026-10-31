@@ -233,10 +233,13 @@
       "active": "活跃",
       "online": "在线",
       "offline": "离线",
-      "deleteConfirm": "确定要删除此服务器吗？",
+      "deleteConfirm": "这也会删除该服务器的聊天和请求日志。如需保留，请改为停用该服务器。",
       "emptyTitle": "未配置服务器",
       "emptyDescription": "添加您的第一个 Ollama 服务器以开始使用。",
-      "emptyAction": "添加服务器"
+      "emptyAction": "添加服务器",
+      "deleteTitle": "删除服务器",
+      "deleteSuccess": "服务器已删除",
+      "deleteError": "无法删除服务器。请检查服务器日志。"
     },
     "logs": {
       "title": "日志",

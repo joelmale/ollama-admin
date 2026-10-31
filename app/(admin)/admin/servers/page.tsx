@@ -171,11 +171,16 @@ export default function ServersPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await fetch(`/api/servers/${deleteTarget}`, { method: "DELETE" });
-      toast("Server deleted", "success");
+      const res = await fetch(`/api/servers/${deleteTarget}`, { method: "DELETE" });
+      const data = await res.json().catch(() => null);
+      if (res.ok) {
+        toast(t("deleteSuccess"), "success");
+      } else {
+        toast(data?.error ?? t("deleteError"), "error");
+      }
       fetchServers();
     } catch {
-      toast("Error deleting server", "error");
+      toast(t("deleteError"), "error");
     }
     setDeleteTarget(null);
   };
@@ -394,7 +399,7 @@ export default function ServersPage() {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete server"
+        title={t("deleteTitle")}
         description={t("deleteConfirm")}
         confirmLabel={tc("delete")}
         onConfirm={handleDelete}

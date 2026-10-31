@@ -233,10 +233,13 @@
       "active": "アクティブ",
       "online": "オンライン",
       "offline": "オフライン",
-      "deleteConfirm": "このサーバーを削除しますか？",
+      "deleteConfirm": "このサーバーのチャットとリクエストログも削除されます。残す場合は、代わりにサーバーを無効にしてください。",
       "emptyTitle": "サーバーが設定されていません",
       "emptyDescription": "最初のOllamaサーバーを追加して始めましょう。",
-      "emptyAction": "サーバーを追加"
+      "emptyAction": "サーバーを追加",
+      "deleteTitle": "サーバーを削除",
+      "deleteSuccess": "サーバーを削除しました",
+      "deleteError": "サーバーを削除できませんでした。サーバーログを確認してください。"
     },
     "logs": {
       "title": "ログ",

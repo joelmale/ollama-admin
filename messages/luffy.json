@@ -233,10 +233,13 @@
       "active": "Sailing",
       "online": "On the sea!",
       "offline": "Sunk!",
-      "deleteConfirm": "Get rid of this ship?!",
+      "deleteConfirm": "This also deletes the server's chats and request logs. To keep them, deactivate the server instead.",
       "emptyTitle": "No ships!",
       "emptyDescription": "Get your first Ollama ship to start! You can't be King of the Pirates without a ship!",
-      "emptyAction": "Get a Ship!"
+      "emptyAction": "Get a Ship!",
+      "deleteTitle": "Delete server",
+      "deleteSuccess": "Server deleted",
+      "deleteError": "The server could not be deleted. Check the server logs."
     },
     "logs": {
       "title": "Ship's Log",

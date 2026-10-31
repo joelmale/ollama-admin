@@ -235,10 +235,13 @@
       "active": "Actiu",
       "online": "En línia",
       "offline": "Fora de línia",
-      "deleteConfirm": "Estàs segur que vols eliminar aquest servidor?",
+      "deleteConfirm": "També s'eliminaran els xats i els registres de sol·licituds del servidor. Per conservar-los, desactiva el servidor.",
       "emptyTitle": "No hi ha servidors configurats",
       "emptyDescription": "Afegeix el teu primer servidor Ollama per començar.",
-      "emptyAction": "Afegir servidor"
+      "emptyAction": "Afegir servidor",
+      "deleteTitle": "Elimina el servidor",
+      "deleteSuccess": "Servidor eliminat",
+      "deleteError": "No s'ha pogut eliminar el servidor. Revisa els registres del servidor."
     },
     "logs": {
       "title": "Registres",

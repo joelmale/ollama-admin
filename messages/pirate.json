@@ -233,10 +233,13 @@
       "active": "Sailing",
       "online": "On the seas!",
       "offline": "Shipwrecked!",
-      "deleteConfirm": "Scuttle this ship?!",
+      "deleteConfirm": "This also sinks the server's chats and logs. To keep 'em, deactivate the server instead.",
       "emptyTitle": "No ships in the fleet!",
       "emptyDescription": "Add yer first Ollama galleon to set sail, matey!",
-      "emptyAction": "Add a Galleon!"
+      "emptyAction": "Add a Galleon!",
+      "deleteTitle": "Scuttle the server",
+      "deleteSuccess": "Server scuttled",
+      "deleteError": "The server wouldn't sink. Check the logs."
     },
     "logs": {
       "title": "Captain's Log",

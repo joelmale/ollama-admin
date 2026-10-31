@@ -233,10 +233,13 @@
       "active": "Active",
       "online": "Online",
       "offline": "Offline",
-      "deleteConfirm": "Are you sure you want to delete this server?",
+      "deleteConfirm": "This also deletes the server's chats and request logs. To keep them, deactivate the server instead.",
       "emptyTitle": "No servers configured",
       "emptyDescription": "Add your first Ollama server to get started.",
-      "emptyAction": "Add Server"
+      "emptyAction": "Add Server",
+      "deleteTitle": "Delete server",
+      "deleteSuccess": "Server deleted",
+      "deleteError": "The server could not be deleted. Check the server logs."
     },
     "logs": {
       "title": "Logs",
