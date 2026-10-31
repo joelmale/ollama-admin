@@ -361,7 +361,7 @@ version: "3.9"
 
 services:
   ollama-admin:
-    image: ghcr.io/ollama-admin/ollama-admin:${VERSION}
+    image: ghcr.io/joelmale/ollama-admin:${VERSION}
     # Repair the SQLite volume, then the entrypoint drops to UID/GID 1001.
     user: "0:0"
     ports:
@@ -390,7 +390,7 @@ COMPOSEEOF
     cat >> "$COMPOSE_FILE" <<COMPOSEEOF
 
   gpu-agent:
-    image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:${VERSION}
+    image: ghcr.io/joelmale/ollama-admin-gpu-agent:${VERSION}
 COMPOSEEOF
 
     if [ "$gpu_backend" = "nvidia" ]; then

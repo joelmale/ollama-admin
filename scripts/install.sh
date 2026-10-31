@@ -3,10 +3,10 @@ set -euo pipefail
 
 # ─────────────────────────────────────────────
 # Ollama Admin — One-line installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 # ─────────────────────────────────────────────
 
-IMAGE="ghcr.io/ollama-admin/ollama-admin"
+IMAGE="ghcr.io/joelmale/ollama-admin"
 VERSION="${OLLAMA_ADMIN_VERSION:-latest}"
 INSTALL_DIR="${OLLAMA_ADMIN_DIR:-$HOME/ollama-admin}"
 PORT="${OLLAMA_ADMIN_PORT:-3000}"

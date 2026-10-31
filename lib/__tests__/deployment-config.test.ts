@@ -30,14 +30,30 @@ describe("Docker host access configuration", () => {
     );
   });
 
-  it("refreshes the mutable latest image before Compose starts it", () => {
+  it("pins Compose to this fork's image at the current package version", () => {
     const contents = readFileSync(
       resolve(process.cwd(), "docker-compose.yml"),
       "utf8"
     );
-
-    expect(contents).toMatch(
-      /image: ghcr\.io\/ollama-admin\/ollama-admin:\$\{VERSION:-latest\}\n {4}pull_policy: always/
+    const { version } = JSON.parse(
+      readFileSync(resolve(process.cwd(), "package.json"), "utf8")
     );
+
+    expect(contents).toContain(
+      `image: ghcr.io/joelmale/ollama-admin:\${VERSION:-${version}}\n    pull_policy: missing`
+    );
+  });
+
+  it.each([
+    "docker-compose.yml",
+    "install.sh",
+    "scripts/install.sh",
+    "scripts/install-gpu-agent.sh",
+    "scripts/bundle.sh",
+    "README.md",
+  ])("does not reference the upstream registry or repository in %s", (file) => {
+    const contents = readFileSync(resolve(process.cwd(), file), "utf8");
+
+    expect(contents).not.toContain("ollama-admin/ollama-admin");
   });
 });

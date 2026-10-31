@@ -8,13 +8,13 @@
   It's the difference between <em>using</em> Ollama and <em>operating</em> Ollama.
 </p>
 <p align="center">
-  <a href="https://github.com/ollama-admin/ollama-admin/actions/workflows/ci.yml">
-    <img src="https://github.com/ollama-admin/ollama-admin/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <a href="https://github.com/joelmale/ollama-admin/actions/workflows/ci.yml">
+    <img src="https://github.com/joelmale/ollama-admin/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
-  <a href="https://github.com/ollama-admin/ollama-admin/releases/latest">
-    <img src="https://img.shields.io/github/v/release/ollama-admin/ollama-admin" alt="Latest release" />
+  <a href="https://github.com/joelmale/ollama-admin/releases/latest">
+    <img src="https://img.shields.io/github/v/release/joelmale/ollama-admin" alt="Latest release" />
   </a>
-  <a href="https://github.com/ollama-admin/ollama-admin/pkgs/container/ollama-admin">
+  <a href="https://github.com/joelmale/ollama-admin/pkgs/container/ollama-admin">
     <img src="https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker" alt="Docker" />
   </a>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License" />
@@ -85,7 +85,7 @@ And yes, it also has a full-featured chat interface with streaming, model compar
 ### Option 1 — One-liner (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 ```
 
 Creates `~/ollama-admin/`, pulls the image from ghcr.io, and starts the container. Open [http://localhost:3000](http://localhost:3000) — the setup wizard takes it from there.
@@ -97,11 +97,11 @@ Creates `~/ollama-admin/`, pulls the image from ghcr.io, and starts the containe
 # Custom port and remote Ollama server
 OLLAMA_ADMIN_PORT=8080 \
 DEFAULT_OLLAMA_URL=http://192.168.1.50:11434 \
-  curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 
 # Pin to a specific version
 OLLAMA_ADMIN_VERSION=0.11.0 \
-  curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install.sh | bash
 ```
 
 </details>
@@ -113,7 +113,7 @@ OLLAMA_ADMIN_VERSION=0.11.0 \
 For production deployments or when you need full control over the configuration.
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 cp .env.docker.example .env   # edit NEXTAUTH_SECRET and other settings as needed
 docker compose up -d
@@ -145,7 +145,7 @@ Uncomment the `gpu-agent` service in `docker-compose.yml`:
 
 ```yaml
 gpu-agent:
-  image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:latest
+  image: ghcr.io/joelmale/ollama-admin-gpu-agent:latest
   runtime: nvidia
   environment:
     NVIDIA_VISIBLE_DEVICES: all
@@ -164,7 +164,7 @@ Set `GPU_AGENT_ENABLED=true` in `.env`, then `docker compose up -d`.
 
 ```yaml
 gpu-agent:
-  image: ghcr.io/ollama-admin/ollama-admin-gpu-agent:latest
+  image: ghcr.io/joelmale/ollama-admin-gpu-agent:latest
   environment:
     GPU_BACKEND: amd
   devices:
@@ -191,7 +191,7 @@ For servers with no internet access, private registries (Harbor, Nexus), or high
 **Step 1 — on a machine with internet access, clone the repo and create the bundle:**
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 
 # Web app only
@@ -253,7 +253,7 @@ The script runs `docker load` on the images, generates a `docker-compose.yml`, a
 ### Option 4 — Local development
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 cp .env.example .env
 npm install
@@ -293,7 +293,7 @@ This is the core of what makes Ollama Admin different. The GPU Agent is a lightw
 
 ```bash
 # One-liner (online)
-curl -fsSL https://raw.githubusercontent.com/ollama-admin/ollama-admin/main/scripts/install-gpu-agent.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joelmale/ollama-admin/main/scripts/install-gpu-agent.sh | bash
 ```
 
 <details>
@@ -645,7 +645,7 @@ Generate API keys from **Settings → API Keys**.
 ### Setup
 
 ```bash
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin
 cp .env.example .env
 npm install
@@ -792,14 +792,14 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ```bash
 # Quick contributor setup
-git clone https://github.com/ollama-admin/ollama-admin.git
+git clone https://github.com/joelmale/ollama-admin.git
 cd ollama-admin && npm install && npm run dev
 
 # Run full checks before submitting
 npm test && npx next lint && npm run build
 ```
 
-Good first issues are labelled [`good-first-issue`](https://github.com/ollama-admin/ollama-admin/issues?q=label%3Agood-first-issue) on GitHub.
+Good first issues are labelled [`good-first-issue`](https://github.com/joelmale/ollama-admin/issues?q=label%3Agood-first-issue) on GitHub.
 
 ---
 
