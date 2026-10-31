@@ -194,8 +194,6 @@ else
   GPU_SERVICE_BLOCK=""
 fi
 
-GPU_AGENT_ENABLED="false"
-$WITH_GPU_AGENT && GPU_AGENT_ENABLED="true"
 
 cat > docker-compose.yml <<YAML
 services:
@@ -213,8 +211,6 @@ services:
       NEXTAUTH_SECRET: \${NEXTAUTH_SECRET:-${NEXTAUTH_SECRET}}
       NEXTAUTH_URL: \${NEXTAUTH_URL:-${NEXTAUTH_URL}}
       LOG_RETENTION_DAYS: \${LOG_RETENTION_DAYS:-90}
-      LOG_STORE_PROMPTS: \${LOG_STORE_PROMPTS:-true}
-      GPU_AGENT_ENABLED: \${GPU_AGENT_ENABLED:-${GPU_AGENT_ENABLED}}
     volumes:
       - ollama-admin-data:/data
     restart: unless-stopped

@@ -497,9 +497,6 @@
     "language": "Idioma",
     "loggingPrivacy": "Registros y privacidad",
     "logRetentionDays": "Retención de registros (días)",
-    "storePrompts": "Almacenar contenido de prompts",
-    "storePromptsYes": "Sí — almacenar prompts y respuestas completas",
-    "storePromptsNo": "No — almacenar solo metadatos (tokens, latencia)",
     "saveChanges": "Guardar cambios",
     "saved": "Ajustes guardados",
     "purgeLogs": "Purgar registros antiguos",
@@ -535,7 +532,8 @@
     "apiKeyDeleteError": "Error al eliminar la clave API",
     "database": "Base de datos",
     "connected": "Conectado",
-    "databaseType": "SQLite (por defecto)"
+    "databaseType": "SQLite (por defecto)",
+    "logRetentionHint": "Los registros de solicitudes más antiguos se eliminan automáticamente cada 6 horas. 0 los conserva para siempre."
   },
   "notFound": {
     "title": "Página no encontrada",

@@ -499,9 +499,6 @@
     "language": "Idioma",
     "loggingPrivacy": "Registres i privacitat",
     "logRetentionDays": "Retenció de registres (dies)",
-    "storePrompts": "Emmagatzemar contingut dels prompts",
-    "storePromptsYes": "Sí — emmagatzema prompts i respostes complets",
-    "storePromptsNo": "No — emmagatzema només metadades (tokens, latència)",
     "saveChanges": "Desar canvis",
     "saved": "Configuració desada",
     "purgeLogs": "Purgar registres antics",
@@ -537,7 +534,8 @@
     "apiKeyDeleteError": "Error en eliminar la clau API",
     "database": "Base de dades",
     "connected": "Connectat",
-    "databaseType": "SQLite (per defecte)"
+    "databaseType": "SQLite (per defecte)",
+    "logRetentionHint": "Els registres de sol·licituds més antics s'eliminen automàticament cada 6 hores. 0 els conserva per sempre."
   },
   "notFound": {
     "title": "Pàgina no trobada",

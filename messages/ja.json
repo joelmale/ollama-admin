@@ -497,9 +497,6 @@
     "language": "言語",
     "loggingPrivacy": "ログとプライバシー",
     "logRetentionDays": "ログ保持期間（日）",
-    "storePrompts": "プロンプト内容を保存",
-    "storePromptsYes": "はい — プロンプトと応答を完全に保存",
-    "storePromptsNo": "いいえ — メタデータのみ保存（トークン、レイテンシ）",
     "saveChanges": "変更を保存",
     "saved": "設定が保存されました",
     "purgeLogs": "古いログを削除",
@@ -535,7 +532,8 @@
     "apiKeyDeleteError": "APIキーの削除エラー",
     "database": "データベース",
     "connected": "接続済み",
-    "databaseType": "SQLite（デフォルト）"
+    "databaseType": "SQLite（デフォルト）",
+    "logRetentionHint": "これより古いリクエストログは6時間ごとに自動で削除されます。0にすると無期限に保持します。"
   },
   "notFound": {
     "title": "ページが見つかりません",

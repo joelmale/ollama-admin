@@ -497,9 +497,6 @@
     "language": "भाषा",
     "loggingPrivacy": "लॉगिंग और गोपनीयता",
     "logRetentionDays": "लॉग प्रतिधारण (दिन)",
-    "storePrompts": "प्रॉम्प्ट सामग्री संग्रहीत करें",
-    "storePromptsYes": "हाँ — पूर्ण प्रॉम्प्ट और प्रतिक्रियाएं संग्रहीत करें",
-    "storePromptsNo": "नहीं — केवल मेटाडेटा संग्रहीत करें (टोकन, विलंब)",
     "saveChanges": "परिवर्तन सहेजें",
     "saved": "सेटिंग्स सहेजी गई",
     "purgeLogs": "पुराने लॉग हटाएं",
@@ -535,7 +532,8 @@
     "apiKeyDeleteError": "API कुंजी हटाने में त्रुटि",
     "database": "डेटाबेस",
     "connected": "कनेक्टेड",
-    "databaseType": "SQLite (डिफ़ॉल्ट)"
+    "databaseType": "SQLite (डिफ़ॉल्ट)",
+    "logRetentionHint": "इससे पुराने अनुरोध लॉग हर 6 घंटे में अपने-आप हट जाते हैं। 0 उन्हें हमेशा रखता है।"
   },
   "notFound": {
     "title": "पृष्ठ नहीं मिला",

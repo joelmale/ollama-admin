@@ -497,9 +497,6 @@
     "language": "Talking style",
     "loggingPrivacy": "Secrets",
     "logRetentionDays": "Keep logs (days)",
-    "storePrompts": "Save what we said",
-    "storePromptsYes": "Yeah — save everything",
-    "storePromptsNo": "Nah — just numbers",
     "saveChanges": "SAVE IT!",
     "saved": "Saved! Shishishi!",
     "purgeLogs": "Delete old logs",
@@ -535,7 +532,8 @@
     "apiKeyDeleteError": "Couldn't throw it away!",
     "database": "Data storage",
     "connected": "Connected",
-    "databaseType": "SQLite (default)"
+    "databaseType": "SQLite (default)",
+    "logRetentionHint": "Request logs older than this are deleted automatically every 6 hours. 0 keeps them forever."
   },
   "notFound": {
     "title": "I'M LOST! Shishishi!",

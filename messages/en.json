@@ -497,9 +497,6 @@
     "language": "Language",
     "loggingPrivacy": "Logging & Privacy",
     "logRetentionDays": "Log retention (days)",
-    "storePrompts": "Store prompt content",
-    "storePromptsYes": "Yes — store full prompts and responses",
-    "storePromptsNo": "No — store only metadata (tokens, latency)",
     "saveChanges": "Save Changes",
     "saved": "Settings saved",
     "purgeLogs": "Purge Old Logs",
@@ -535,7 +532,8 @@
     "apiKeyDeleteError": "Error deleting API key",
     "database": "Database",
     "connected": "Connected",
-    "databaseType": "SQLite (default)"
+    "databaseType": "SQLite (default)",
+    "logRetentionHint": "Request logs older than this are deleted automatically every 6 hours. 0 keeps them forever."
   },
   "notFound": {
     "title": "Page not found",

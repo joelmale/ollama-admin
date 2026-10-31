@@ -252,7 +252,6 @@ services:
       NEXTAUTH_SECRET: \${NEXTAUTH_SECRET:-$(openssl rand -hex 32)}
       NEXTAUTH_URL: \${NEXTAUTH_URL:-http://localhost:${PORT}}
       LOG_RETENTION_DAYS: \${LOG_RETENTION_DAYS:-90}
-      GPU_AGENT_ENABLED: \${GPU_AGENT_ENABLED:-false}
     volumes:
       - ollama-admin-data:/data
     restart: unless-stopped

@@ -6,7 +6,13 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       upsert: vi.fn(),
     },
+    $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   },
+}));
+
+vi.mock("@/lib/runtime-settings", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/runtime-settings")>()),
+  applyRateLimitSettings: vi.fn(),
 }));
 
 vi.mock("@/lib/require-admin", () => ({
@@ -15,6 +21,7 @@ vi.mock("@/lib/require-admin", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import { applyRateLimitSettings } from "@/lib/runtime-settings";
 
 const mockSession = { user: { id: "admin_1", name: "admin", role: "admin" } };
 
@@ -62,7 +69,7 @@ describe("PUT /api/settings", () => {
       method: "PUT",
       body: JSON.stringify({
         logRetentionDays: "30",
-        logStorePrompts: "false",
+        theme: "dark",
       }),
     });
     const res = await PUT(req as any);
@@ -75,6 +82,32 @@ describe("PUT /api/settings", () => {
       update: { value: "30" },
       create: { key: "logRetentionDays", value: "30" },
     });
+  });
+
+  it("rejects an out-of-range numeric setting without saving anything", async () => {
+    const { PUT } = await import("@/app/api/settings/route");
+    const req = new Request("http://localhost/api/settings", {
+      method: "PUT",
+      body: JSON.stringify({ theme: "dark", rateLimitMax: "0" }),
+    });
+    const res = await PUT(req as any);
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toContain("rateLimitMax");
+    expect(prisma.settings.upsert).not.toHaveBeenCalled();
+  });
+
+  it("applies new rate limits immediately", async () => {
+    (prisma.settings.upsert as ReturnType<typeof vi.fn>).mockResolvedValue({});
+
+    const { PUT } = await import("@/app/api/settings/route");
+    const req = new Request("http://localhost/api/settings", {
+      method: "PUT",
+      body: JSON.stringify({ rateLimitMax: "120", rateLimitWindow: "60" }),
+    });
+    await PUT(req as any);
+
+    expect(applyRateLimitSettings).toHaveBeenCalledTimes(1);
   });
 
   it("returns 403 when not admin", async () => {

@@ -155,7 +155,7 @@ gpu-agent:
   restart: unless-stopped
 ```
 
-Set `GPU_AGENT_ENABLED=true` in `.env`, then `docker compose up -d`.
+Run `docker compose up -d`, then set the server's GPU Agent URL (e.g. `http://gpu-agent:11435`) in **Admin → Servers → edit server**.
 
 </details>
 
@@ -178,7 +178,7 @@ gpu-agent:
   restart: unless-stopped
 ```
 
-Set `GPU_AGENT_ENABLED=true` in `.env`, then `docker compose up -d`.
+Run `docker compose up -d`, then set the server's GPU Agent URL (e.g. `http://gpu-agent:11435`) in **Admin → Servers → edit server**.
 
 </details>
 
@@ -339,7 +339,7 @@ All Ollama traffic goes through `/api/proxy` — never directly from clients to 
 - **Multi-client support** — point any app (LangChain, Open WebUI, custom scripts, CI pipelines) at the proxy instead of Ollama directly. All traffic flows through one place.
 - **Per-client API keys** — create a separate `oa-` key for each app or team. Revoke one key without touching the others. See usage broken down by key in the metrics dashboard.
 - **Rate limiting** — per-IP token bucket prevents any single client from saturating your GPU.
-- **Privacy control** — set `LOG_STORE_PROMPTS=false` to log only metadata (tokens, latency) without storing prompt content.
+- **Privacy** — proxy logs hold metadata only (model, tokens, latency, status, key, IP); prompt and response content is never written to the request log.
 - **Multi-server routing** — pass `?serverId=` to route a request to a specific Ollama instance. Your clients never need to know which server is behind the proxy.
 
 ```bash
@@ -434,13 +434,8 @@ Copy `.env.example` to `.env` and adjust as needed.
 | `NEXTAUTH_URL` | `http://localhost:3000` | Public app URL — must match your deployment URL |
 | `DEFAULT_OLLAMA_URL` | `http://localhost:11434` outside Docker; `http://host.docker.internal:11434` in the Docker template | Default Ollama server URL |
 | `AUTH_DISABLED` | `false` | Bypass login entirely — **dev only, never in production** |
-| `LOG_RETENTION_DAYS` | `90` | Auto-purge logs older than N days (`0` = never purge) |
-| `LOG_STORE_PROMPTS` | `true` | Store full prompt/response content; set `false` for metadata-only logging |
-| `CATALOG_REFRESH_ENABLED` | `true` | Allow admins to refresh the model catalog from ollama.com |
-| `CATALOG_RATE_LIMIT_MS` | `2000` | Minimum ms between catalog scrape requests |
-| `GPU_AGENT_ENABLED` | `false` | Show GPU monitoring UI and enable `/api/gpu` |
-| `GITHUB_CLIENT_ID` | — | GitHub OAuth client ID (optional) |
-| `GITHUB_CLIENT_SECRET` | — | GitHub OAuth client secret (optional) |
+| `LOG_RETENTION_DAYS` | `90` | Default for purging request logs older than N days (`0` = never). The value saved in **Settings** takes precedence. The purge runs at startup and every 6 hours. |
+| `CATALOG_REFRESH_ENABLED` | `true` | Allow the model catalog to be fetched from ollama.com; `false` serves only what is already cached |
 
 ---
 
@@ -732,7 +727,6 @@ See the [Docker host networking guidance](https://docs.docker.com/compose/how-to
 <summary><strong>GPU not detected</strong></summary>
 
 - Confirm NVIDIA drivers work: `nvidia-smi`
-- Set `GPU_AGENT_ENABLED=true` in `.env` and restart
 - Check GPU Agent logs: `docker compose logs gpu-agent`
 - Confirm the GPU Agent URL is set in **Admin → Servers → edit server**
 
@@ -779,7 +773,6 @@ The entrypoint repairs only the SQLite database and its sidecar files, then imme
 <details>
 <summary><strong>Logs not appearing</strong></summary>
 
-- `LOG_STORE_PROMPTS=false` stores only metadata (tokens, latency), not content
 - Confirm the proxy endpoint is being used (`/api/proxy/*`) — direct Ollama calls are not logged
 
 </details>
@@ -805,9 +798,10 @@ Good first issues are labelled [`good-first-issue`](https://github.com/joelmale/
 
 ## 🔒 Privacy
 
-- Set `LOG_STORE_PROMPTS=false` to log only metadata (tokens, latency, model) — prompt and response content is never written to the database
-- Logs are auto-purged after `LOG_RETENTION_DAYS` days
-- Catalog refresh is rate-limited to avoid hammering ollama.com
+- Request logs store metadata only (model, tokens, latency, status, API key, IP) — never prompt or response content
+- Chat conversations are stored in the database so they can be reopened; delete a chat to remove its messages
+- Request logs are purged after the retention period set in **Settings** (default `LOG_RETENTION_DAYS`)
+- The catalog is cached for 30 minutes to avoid hammering ollama.com
 - Do not expose Ollama Admin to the internet without enabling authentication
 
 ---

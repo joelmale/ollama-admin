@@ -497,9 +497,6 @@
     "language": "语言",
     "loggingPrivacy": "日志与隐私",
     "logRetentionDays": "日志保留时间（天）",
-    "storePrompts": "存储提示词内容",
-    "storePromptsYes": "是 — 存储完整提示词和回复",
-    "storePromptsNo": "否 — 仅存储元数据（Token、延迟）",
     "saveChanges": "保存更改",
     "saved": "设置已保存",
     "purgeLogs": "清除旧日志",
@@ -535,7 +532,8 @@
     "apiKeyDeleteError": "删除 API 密钥出错",
     "database": "数据库",
     "connected": "已连接",
-    "databaseType": "SQLite（默认）"
+    "databaseType": "SQLite（默认）",
+    "logRetentionHint": "早于此期限的请求日志每 6 小时自动删除。设为 0 则永久保留。"
   },
   "notFound": {
     "title": "页面未找到",
