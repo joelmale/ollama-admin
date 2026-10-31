@@ -135,6 +135,31 @@ describe("regenerate", () => {
   });
 });
 
+describe("edit", () => {
+  it("drops the edited message and everything after it, then resends", async () => {
+    givenChat([
+      msg("u1", "user", "first"),
+      msg("a1", "assistant", "answer"),
+      msg("u2", "user", "second"),
+      msg("a2", "assistant", "later"),
+    ]);
+    const deleteMany = (prisma as unknown as { message: { deleteMany: ReturnType<typeof vi.fn> } }).message.deleteMany;
+    const fetchMock = vi.fn().mockResolvedValue(streamResponse([ndjson({ message: { content: "x" } }, { done: true })]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await (await post({ content: "second, edited", editMessageId: "u2" })).text();
+
+    expect(deleteMany).toHaveBeenCalledWith({ where: { id: { in: ["u2", "a2"] } } });
+    expect(sentMessages(fetchMock)).toEqual(["user:first", "assistant:answer", "user:second, edited"]);
+  });
+});
+
+it("returns 404 for a missing chat", async () => {
+  mocked.chat.findUnique.mockResolvedValue(null);
+
+  expect((await post({ content: "hi" })).status).toBe(404);
+});
+
 describe("streaming", () => {
   it("saves the reply and sends a done event", async () => {
     givenChat([], "New Conversation");
