@@ -182,6 +182,35 @@
     "emptyAction": "Actualitzar catàleg",
     "downloading": "Descarregant...",
     "fitsGpu": "Cap a la meva GPU",
+    "sortBy": "Ordena per",
+    "sort": {
+      "popular": "Més populars",
+      "updated": "Més recents",
+      "name": "Nom",
+      "size": "Mida",
+      "grade": "Nota de velocitat"
+    },
+    "columns": {
+      "model": "Model",
+      "pulls": "Baixades",
+      "updated": "Actualitzat",
+      "size": "Mida",
+      "vram": "VRAM",
+      "speed": "Velocitat",
+      "grade": "Nota"
+    },
+    "vramLabel": "VRAM de la teva GPU (GB)",
+    "vramHint": "Introdueix la VRAM de la teva GPU per veure quins models hi caben.",
+    "vramDetected": "Detectada: {gpu}",
+    "vramUseDetected": "Usa la detectada",
+    "vramEstimate": "~{gb} GB de VRAM, {pct}% de la teva GPU",
+    "vramFit": {
+      "comfortable": "Hi cap amb folgança",
+      "tight": "Just",
+      "exceeds": "No hi cap"
+    },
+    "vramLegend": "Verd: fins al 75% de la VRAM. Groc: fins al 100%. Vermell: més que la teva VRAM.",
+    "reverseSort": "Inverteix l'ordre",
     "capabilities": {
       "text": "Text",
       "tools": "Eines",

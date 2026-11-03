@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
       models = models.filter(
         (m) =>
           m.name.toLowerCase().includes(search) ||
-          m.description.toLowerCase().includes(search)
+          m.description.toLowerCase().includes(search) ||
+          m.sizes.some((size) => size.includes(search))
       );
     }
 

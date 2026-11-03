@@ -10,7 +10,9 @@ export interface ScrapedModel {
   capabilities: string[];
   sizes: string[];
   pulls: string;
+  pullCount: number;
   updated: string;
+  updatedAt: string;
 }
 
 export class CatalogUnavailableError extends Error {
@@ -67,9 +69,14 @@ export function parseModelsFromHtml(html: string): ScrapedModel[] {
     });
 
     const pulls = $el.find('span[title$="downloads"] > span').first().text().trim();
-    const updated = $el.find('span[title^="Updated"]').first().text().trim();
+    const exactDownloads = Number(($el.find('span[title$="downloads"]').first().attr("title") ?? "").replace(/\D/g, ""));
+    const pullCount = exactDownloads || parseCount(pulls);
+    const $updated = $el.find('span[title^="Updated"]').first();
+    const updated = $updated.text().trim();
+    const updatedTime = Date.parse(($updated.attr("title") ?? "").replace(/^Updated\s+/, ""));
+    const updatedAt = Number.isNaN(updatedTime) ? "" : new Date(updatedTime).toISOString();
 
-    models.push({ id, name: heading || id, description, capabilities, sizes, pulls, updated });
+    models.push({ id, name: heading || id, description, capabilities, sizes, pulls, pullCount, updated, updatedAt });
   });
 
   return models;
@@ -170,7 +177,7 @@ export async function scrapeCatalog(fetcher: (url: string) => Promise<string> = 
     }
   }
 
-  models.sort((a, b) => parseCount(b.pulls) - parseCount(a.pulls));
+  models.sort((a, b) => b.pullCount - a.pullCount);
   return models;
 }
 

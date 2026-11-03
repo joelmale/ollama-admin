@@ -9,6 +9,7 @@ interface TooltipProps {
   children: ReactNode;
   side?: "top" | "bottom" | "left" | "right";
   className?: string;
+  wrapperClassName?: string;
 }
 
 const sideStyles: Record<string, string> = {
@@ -18,12 +19,12 @@ const sideStyles: Record<string, string> = {
   right: "left-full top-1/2 -translate-y-1/2 ml-2",
 };
 
-function Tooltip({ content, children, side = "top", className }: TooltipProps) {
+function Tooltip({ content, children, side = "top", className, wrapperClassName }: TooltipProps) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div
-      className="relative inline-flex"
+      className={cn("relative inline-flex", wrapperClassName)}
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
       onFocus={() => setVisible(true)}
